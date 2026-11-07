@@ -11,8 +11,8 @@
     "test": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@digitaalgemeengoed/oa-contract": "^0.1.0",
-    "@digitaalgemeengoed/oa-paneel": "^0.1.0"
+    "@digitaalgemeengoed/oa-contract": "^0.2.0",
+    "@digitaalgemeengoed/oa-paneel": "^0.2.0"
   },
   "devDependencies": {
     "typescript": "5.9.3",
