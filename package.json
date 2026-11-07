@@ -1,5 +1,5 @@
 {
-  "name": "@oa/adapters",
+  "name": "@digitaalgemeengoed/oa-adapters",
   "version": "0.1.0",
   "description": "Adapters per werkomgeving voor de Office Assistent, met een demo-werkomgeving.",
   "license": "EUPL-1.2",
@@ -11,11 +11,16 @@
     "test": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@oa/contract": "^0.1.0",
-    "@oa/paneel": "^0.1.0"
+    "@digitaalgemeengoed/oa-contract": "^0.1.0",
+    "@digitaalgemeengoed/oa-paneel": "^0.1.0"
   },
   "devDependencies": {
     "typescript": "5.9.3",
     "vite": "^8.3.6"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digitaalgemeengoed/oa-adapters.git"
+  },
+  "homepage": "https://github.com/digitaalgemeengoed/oa-adapters#readme"
 }

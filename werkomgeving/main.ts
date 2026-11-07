@@ -1,6 +1,6 @@
-import { plaatsPaneel } from "@oa/paneel";
-import "@oa/paneel/style.css";
-import type { Melding } from "@oa/contract";
+import { plaatsPaneel } from "@digitaalgemeengoed/oa-paneel";
+import "@digitaalgemeengoed/oa-paneel/style.css";
+import type { Melding } from "@digitaalgemeengoed/oa-contract";
 import { DemoEditorAdapter, type DocumentOpslag } from "../src/index";
 import { VOORBEELD } from "./voorbeeld";
 import "./werkomgeving.css";

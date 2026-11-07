@@ -27,7 +27,7 @@ npm run dev       # ontwikkelserver; /api gaat naar de integratielaag op poort 3
 
 ## Een adapter toevoegen
 
-Implementeer `Adapter` uit `@oa/contract` en geef in `werkomgeving()` eerlijk op welke vermogens de omgeving heeft. Alleen de drie basisvermogens zijn verplicht. Een omgeving die niets anders kan dan een mededeling tonen, kan zo toch meedoen.
+Implementeer `Adapter` uit `@digitaalgemeengoed/oa-contract` en geef in `werkomgeving()` eerlijk op welke vermogens de omgeving heeft. Alleen de drie basisvermogens zijn verplicht. Een omgeving die niets anders kan dan een mededeling tonen, kan zo toch meedoen.
 
 ## Licentie
 

@@ -7,7 +7,7 @@ import {
   type Plek,
   type Vermogen,
   type Werkomgeving,
-} from "@oa/contract";
+} from "@digitaalgemeengoed/oa-contract";
 
 /**
  * Adapter voor de demo-tekstverwerker: een bewerkbaar html-element.
