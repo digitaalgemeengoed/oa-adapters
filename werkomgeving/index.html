@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo-werkomgeving — Office Assistent</title>
+  </head>
+  <body>
+    <div class="venster">
+      <header class="titelbalk">
+        <span class="app">Demo-tekstverwerker</span>
+        <label class="soort">Werkomgeving
+          <select id="soort">
+            <option value="rijk">rijk: alle vermogens</option>
+            <option value="beperkt">beperkt: alleen de drie basisvermogens</option>
+          </select>
+        </label>
+        <a href="/">Startpagina</a>
+      </header>
+      <div class="werkbalk" role="toolbar" aria-label="Opmaak">
+        <button type="button" id="nieuw">Nieuw</button>
+        <button type="button" id="opslaan" title="Ctrl+S">Opslaan</button>
+        <span class="scheiding"></span>
+        <button type="button" data-opdracht="formatBlock:h1">Kop 1</button>
+        <button type="button" data-opdracht="formatBlock:h2">Kop 2</button>
+        <button type="button" data-opdracht="formatBlock:h3">Kop 3</button>
+        <button type="button" data-opdracht="formatBlock:p">Alinea</button>
+        <button type="button" data-opdracht="bold"><b>V</b></button>
+        <button type="button" data-opdracht="italic"><i>C</i></button>
+        <button type="button" data-opdracht="insertUnorderedList">Lijst</button>
+      </div>
+      <main class="werkvlak">
+        <div class="pagina">
+          <article id="document" contenteditable="true" spellcheck="true" lang="nl" aria-label="Document"></article>
+        </div>
+        <aside id="paneel" aria-label="Assistent"></aside>
+      </main>
+      <footer class="statusbalk"><span id="status" role="status">Gereed</span></footer>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+.pagina, #paneel { min-width: 0; }
+body { font-family: system-ui, sans-serif; background: #e9e9e6; color: #1d1d1b; }
+.venster { display: grid; grid-template-rows: auto auto 1fr auto; height: 100vh; }
+.titelbalk { display: flex; gap: 16px; align-items: center; padding: 8px 16px; background: #2b4b6f; color: #fff; font-size: 14px; }
+.titelbalk .app { font-weight: 600; margin-right: auto; }
+.titelbalk a { color: #fff; }
+.titelbalk select { margin-left: 6px; }
+.werkbalk { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 16px; background: #f5f5f3; border-bottom: 1px solid #d0d0cc; }
+.werkbalk button { font: inherit; font-size: 13px; padding: 4px 10px; border: 1px solid #c4c4bf; background: #fff; border-radius: 4px; cursor: pointer; }
+.werkbalk button:hover { background: #eef2f7; }
+.werkbalk .scheiding { width: 1px; background: #c4c4bf; margin: 0 6px; }
+.werkvlak { display: grid; grid-template-columns: 1fr minmax(320px, 400px); min-height: 0; }
+.pagina { overflow-y: auto; padding: 24px 16px; }
+#document { max-width: 760px; min-height: 900px; margin: 0 auto; background: #fff; padding: 56px 64px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); font-family: Georgia, serif; font-size: 16px; line-height: 1.55; outline: none; }
+#document img { max-width: 100%; height: auto; }
+#document table { border-collapse: collapse; margin: 12px 0; }
+#document td, #document th { border: 1px solid #999; padding: 4px 10px; text-align: left; }
+#document [data-oa-gemarkeerd] { outline: 3px solid #e6a700; outline-offset: 3px; transition: outline-color 0.3s; }
+#paneel { border-left: 1px solid #d0d0cc; min-height: 0; overflow: hidden; }
+.statusbalk { padding: 4px 16px; font-size: 12px; background: #f5f5f3; border-top: 1px solid #d0d0cc; }
+.statusbalk [data-soort="succes"] { color: #1d6b2f; }
+.statusbalk [data-soort="waarschuwing"], .statusbalk [data-soort="fout"] { color: #a1260d; }
+@media (max-width: 800px) {
+  .werkvlak { grid-template-columns: 1fr; grid-template-rows: 1fr 50vh; }
+  #paneel { border-left: 0; border-top: 1px solid #d0d0cc; }
+  #document { padding: 24px 16px; min-height: 0; }
+  .pagina { padding: 12px 8px; }
+  .titelbalk { flex-wrap: wrap; gap: 6px 12px; }
+  .titelbalk .soort, .titelbalk select { max-width: 100%; }
+  .werkbalk { padding: 6px 8px; }
+}

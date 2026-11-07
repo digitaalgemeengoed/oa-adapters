@@ -1,0 +1,21 @@
+{
+  "name": "@oa/adapters",
+  "version": "0.1.0",
+  "description": "Adapters per werkomgeving voor de Office Assistent, met een demo-werkomgeving.",
+  "license": "EUPL-1.2",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "dev": "vite",
+    "test": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@oa/contract": "^0.1.0",
+    "@oa/paneel": "^0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "^8.3.6"
+  }
+}
