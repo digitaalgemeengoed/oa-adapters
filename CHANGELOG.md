@@ -1,5 +1,9 @@
 # Wijzigingen
 
+## 0.4.0 — 2026-11-08
+
+Het origineel: Word levert het .docx (getFileAsync), LibreOffice het .odt (via de brug, `GET /bestand`), Collabora het werkbestand. Allemaal met vermogen `bestand-opleveren`.
+
 ## 0.3.0 — 2026-11-08
 
 - Drie echte werkomgevingen: Microsoft Word (invoegtoepassing, ook Word voor het web), Collabora Online (WOPI, postMessage) en LibreOffice Writer op de eigen computer (extensie met lokale brug).

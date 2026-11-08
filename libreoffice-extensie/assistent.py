@@ -185,6 +185,8 @@ class Brug:
             return {"naam": h(lambda: od.naam_van(doc)), "versie": "0.3.0"}
         if methode == "GET" and pad == "/blokken":
             return h(lambda: od.lees_blokken(doc))
+        if methode == "GET" and pad == "/bestand":
+            return h(lambda: od.bestand(doc))
         if methode == "POST" and pad == "/opdracht":
             h(lambda: od.voer_uit(doc, lichaam))
             return {}

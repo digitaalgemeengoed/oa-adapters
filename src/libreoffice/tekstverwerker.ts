@@ -1,3 +1,4 @@
+import type { Inhoud } from "@digitaalgemeengoed/oa-contract";
 import type { Tekstverwerker } from "../structuur-adapter.js";
 import { groepeer, type Blok, type Doel, type Opdracht, type RuweAlinea, type Tabel } from "../semantisch.js";
 
@@ -50,6 +51,11 @@ export class LibreOfficeTekstverwerker implements Tekstverwerker {
 
   async vervangAlles(html: string): Promise<void> {
     await this.vraag("POST", "/vervang", { html });
+  }
+
+  /** Het document als OpenDocument (.odt), het eigen formaat van Writer. */
+  leesBestand(): Promise<Inhoud> {
+    return this.vraag<Inhoud>("GET", "/bestand");
   }
 
   async leesEigenschap(naam: string): Promise<string | null> {

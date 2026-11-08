@@ -1,4 +1,5 @@
 /// <reference types="office-js" />
+import type { Inhoud } from "@digitaalgemeengoed/oa-contract";
 import type { Tekstverwerker } from "../structuur-adapter.js";
 import { groepeer, niveauUitStijl, type Blok, type Doel, type Inline, type Opdracht, type RuweAlinea, type Tabel } from "../semantisch.js";
 
@@ -160,6 +161,34 @@ export class WordTekstverwerker implements Tekstverwerker {
     });
   }
 
+  /** Het document als .docx (Office.FileType.Compressed), in stukken gelezen. */
+  leesBestand(): Promise<Inhoud> {
+    return new Promise((klaar, mis) => {
+      Office.context.document.getFileAsync(Office.FileType.Compressed, { sliceSize: 4 * 1024 * 1024 }, (r) => {
+        if (r.status !== Office.AsyncResultStatus.Succeeded) return mis(new Error(`Word kon het bestand niet opleveren: ${r.error.message}`));
+        const bestand = r.value;
+        const stukken: Uint8Array[] = [];
+        const lees = (i: number) =>
+          bestand.getSliceAsync(i, (s) => {
+            if (s.status !== Office.AsyncResultStatus.Succeeded) {
+              bestand.closeAsync();
+              return mis(new Error(`Word kon het bestand niet opleveren: ${s.error.message}`));
+            }
+            stukken.push(new Uint8Array(s.value.data as number[]));
+            if (i + 1 < bestand.sliceCount) return lees(i + 1);
+            bestand.closeAsync();
+            klaar({
+              formaat: "docx",
+              mediaType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              codering: "base64",
+              data: naarBase64(stukken),
+            });
+          });
+        lees(0);
+      });
+    });
+  }
+
   async leesEigenschap(naam: string): Promise<string | null> {
     return Word.run(async (ctx) => {
       const p = ctx.document.properties.customProperties.getItemOrNullObject(naam);
@@ -176,4 +205,10 @@ export class WordTekstverwerker implements Tekstverwerker {
       await ctx.sync();
     });
   }
+}
+
+function naarBase64(stukken: Uint8Array[]): string {
+  let binair = "";
+  for (const s of stukken) for (let i = 0; i < s.length; i += 0x8000) binair += String.fromCharCode(...s.subarray(i, i + 0x8000));
+  return btoa(binair);
 }

@@ -26,6 +26,8 @@ export interface Tekstverwerker {
   vervangAlles(html: string): Promise<void>;
   leesEigenschap(naam: string): Promise<string | null>;
   schrijfEigenschap(naam: string, waarde: string): Promise<void>;
+  /** Het bestand zelf (docx, odt …), base64; voor het vastleggen van het origineel. */
+  leesBestand?(): Promise<Inhoud>;
 }
 
 const AFDRUK = "oa-afdruk";
@@ -42,10 +44,16 @@ export class StructuurAdapter implements Adapter {
     private readonly tv: Tekstverwerker,
     private readonly melden: (m: Melding) => void,
     private readonly fragment: MaakFragment = browserFragment,
-  ) {}
+  ) {
+    if (tv.leesBestand) this.leverBestand = () => tv.leesBestand!();
+  }
+
+  /** Het origineel; alleen als de tekstverwerker het bestand kan opleveren. */
+  readonly leverBestand?: () => Promise<Inhoud>;
 
   werkomgeving(): Werkomgeving {
     const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven"];
+    if (this.leverBestand) vermogens.push("bestand-opleveren");
     return { id: this.tv.id, naam: this.tv.naam, vermogens };
   }
 

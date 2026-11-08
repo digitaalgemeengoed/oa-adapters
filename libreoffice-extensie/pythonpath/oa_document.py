@@ -247,6 +247,28 @@ def vervang_alles(document, html):
         os.unlink(pad)
 
 
+def bestand(document):
+    """Het document als OpenDocument-tekst (.odt), zonder de opslagplek van het document te wijzigen."""
+    import base64
+    fd, pad = tempfile.mkstemp(suffix=".odt")
+    os.close(fd)
+    try:
+        filter_ = PropertyValue()
+        filter_.Name = "FilterName"
+        filter_.Value = "writer8"
+        document.storeToURL(uno.systemPathToFileUrl(pad), (filter_,))
+        with open(pad, "rb") as f:
+            data = f.read()
+    finally:
+        os.unlink(pad)
+    return {
+        "formaat": "odt",
+        "mediaType": "application/vnd.oasis.opendocument.text",
+        "codering": "base64",
+        "data": base64.b64encode(data).decode("ascii"),
+    }
+
+
 def lees_eigenschap(document, naam):
     eigen = document.getDocumentProperties().getUserDefinedProperties()
     if eigen.getPropertySetInfo().hasPropertyByName(naam):

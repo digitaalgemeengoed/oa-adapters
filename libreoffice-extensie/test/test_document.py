@@ -127,6 +127,15 @@ class Test(unittest.TestCase):
         od.schrijf_eigenschap(self.doc, "oa-afdruk", '{"identificatie":"x","versie":2}')
         self.assertEqual(od.lees_eigenschap(self.doc, "oa-afdruk"), '{"identificatie":"x","versie":2}')
 
+    def test_45_bestand(self):
+        import base64, zipfile, io
+        b = od.bestand(self.doc)
+        self.assertEqual(b["formaat"], "odt")
+        z = zipfile.ZipFile(io.BytesIO(base64.b64decode(b["data"])))
+        self.assertEqual(z.read("mimetype"), b"application/vnd.oasis.opendocument.text")
+        self.assertIn(b"Raadsvoorstel", z.read("content.xml"))
+        self.assertEqual(self.doc.getURL(), "", "de opslagplek van het document blijft gelijk")
+
     def test_5_vervang_alles(self):
         od.vervang_alles(self.doc, "<h1>Nieuw</h1><p>Tekst met <a href='https://x'>link</a></p>")
         r = od.lees_blokken(self.doc)

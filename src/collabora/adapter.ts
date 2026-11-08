@@ -24,7 +24,7 @@ export class CollaboraAdapter implements Adapter {
   ) {}
 
   werkomgeving(): Werkomgeving {
-    return { id: "collabora-online", naam: "Collabora Online", vermogens: [...BASISVERMOGENS, "afdruk-schrijven"] };
+    return { id: "collabora-online", naam: "Collabora Online", vermogens: [...BASISVERMOGENS, "afdruk-schrijven", "bestand-opleveren"] };
   }
 
   private async vraag<T>(pad: string, init: RequestInit = {}): Promise<T> {
@@ -51,6 +51,12 @@ export class CollaboraAdapter implements Adapter {
     await this.vraag("/html", { method: "PUT", body: JSON.stringify({ html: inhoud.data }) });
     await this.venster.herlaad();
     this.melden({ soort: "waarschuwing", tekst: "Het hele document is vervangen en opnieuw geladen. Controleer de opmaak." });
+  }
+
+  /** Het werkbestand zelf (docx), na opslaan. */
+  async leverBestand(): Promise<Inhoud> {
+    await this.venster.slaOp();
+    return this.vraag<Inhoud>("/bestand");
   }
 
   toon(melding: Melding): void {

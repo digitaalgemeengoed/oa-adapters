@@ -77,6 +77,8 @@ class Test(unittest.TestCase):
         self.assertEqual(self.vraag("GET", "/eigenschap?naam=oa-afdruk")[2], {"waarde": "{\"versie\":1}"})
         self.assertEqual(self.vraag("POST", "/toon", {"soort": "alinea", "alinea": 1})[0], 200)
         self.assertEqual(self.vraag("GET", "/onzin")[0], 404)
+        s, _, b = self.vraag("GET", "/bestand")
+        self.assertEqual((s, b["formaat"], b["codering"]), (200, "odt", "base64"))
 
 
 if __name__ == "__main__":
