@@ -7,3 +7,5 @@ data/
 .env
 public/werkomgeving/
 bron/
+__pycache__/
+*.pyc

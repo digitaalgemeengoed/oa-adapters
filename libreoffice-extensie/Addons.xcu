@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<oor:component-data xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                    oor:name="Addons" oor:package="org.openoffice.Office">
+  <node oor:name="AddonUI">
+    <node oor:name="OfficeMenuBar">
+      <node oor:name="nl.digitaalgemeengoed.oa" oor:op="replace">
+        <prop oor:name="Title" oor:type="xs:string">
+          <value>Office Assistent</value>
+        </prop>
+        <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+        <prop oor:name="ImageIdentifier" oor:type="xs:string"><value/></prop>
+        <node oor:name="Submenu">
+          <node oor:name="m1" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?openen</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Assistent openen bij dit document</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument</value></prop>
+          </node>
+          <node oor:name="m2" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?stoppen</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Verbinding met de assistent verbreken</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument</value></prop>
+          </node>
+        </node>
+      </node>
+    </node>
+  </node>
+</oor:component-data>

@@ -1,20 +1,24 @@
 {
   "name": "@digitaalgemeengoed/oa-adapters",
-  "version": "0.1.0",
-  "description": "Adapters per werkomgeving voor de Office Assistent, met een demo-werkomgeving.",
+  "version": "0.3.0",
+  "description": "Adapters per werkomgeving voor de Office Assistent: demo-tekstverwerker, Microsoft Word, Collabora Online en LibreOffice.",
   "license": "EUPL-1.2",
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "build": "tsc --noEmit -p tsconfig.json && vite build && node scripts/maak-oxt.mjs",
     "dev": "vite",
-    "test": "tsc --noEmit -p tsconfig.json"
+    "test": "tsc --noEmit -p tsconfig.json && node --import tsx --test \"test/*.test.ts\""
   },
   "dependencies": {
     "@digitaalgemeengoed/oa-contract": "^0.2.0",
-    "@digitaalgemeengoed/oa-paneel": "^0.2.0"
+    "@digitaalgemeengoed/oa-paneel": "^0.3.0"
   },
   "devDependencies": {
+    "@types/office-js": "^1.0.616",
+    "fflate": "^0.8.3",
+    "linkedom": "^0.18.15",
+    "tsx": "^4.23.15",
     "typescript": "5.9.3",
     "vite": "^8.3.6"
   },

@@ -1,0 +1,1 @@
+De Office Assistent naast LibreOffice Writer: metadata, toegankelijkheid en vastleggen in het informatieplatform van de gemeente. Het paneel opent in je browser; de extensie geeft het via je eigen computer toegang tot het document dat je open hebt. Prototype van Digitaal GemeenGoed.

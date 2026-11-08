@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Office Assistent bij LibreOffice</title>
+  </head>
+  <body>
+    <div class="lo">
+      <header class="lo-kop">
+        <span class="lo-app">Office Assistent</span>
+        <span class="lo-doc" id="document">LibreOffice Writer</span>
+        <a href="/">Startpagina</a>
+      </header>
+      <p id="status" class="lo-status" role="status"></p>
+      <section id="uitleg" class="lo-uitleg" hidden>
+        <h1>De assistent naast LibreOffice</h1>
+        <ol>
+          <li>Download de extensie: <a href="/libreoffice/office-assistent.oxt" download>office-assistent.oxt</a>.</li>
+          <li>In LibreOffice: <strong>Extra → Extensiebeheer → Toevoegen</strong>, kies het bestand, en herstart LibreOffice.</li>
+          <li>Open een document in Writer en kies in het menu <strong>Office Assistent → Assistent openen bij dit document</strong>. Deze pagina opent dan met het paneel.</li>
+        </ol>
+        <p>De extensie geeft het paneel via je eigen computer toegang tot dat ene document, met een sleutel die alleen deze pagina krijgt.</p>
+      </section>
+      <main id="paneel" class="lo-paneel"></main>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

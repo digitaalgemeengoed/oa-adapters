@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Office Assistent</title>
+    <!-- Office.js moet van het CDN van Microsoft komen. -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  </head>
+  <body>
+    <div class="taak">
+      <p id="status" class="taak-status" role="status">Bezig met starten…</p>
+      <section id="aanmelden" class="taak-aanmelden" hidden>
+        <h1>Office Assistent</h1>
+        <p>Log in met je account van de gemeente om de assistent te gebruiken.</p>
+        <button type="button" id="inloggen">Inloggen</button>
+        <p id="aanmeldfout" class="taak-fout" hidden></p>
+      </section>
+      <div id="paneel"></div>
+    </div>
+    <script type="module" src="./taskpane.ts"></script>
+  </body>
+</html>

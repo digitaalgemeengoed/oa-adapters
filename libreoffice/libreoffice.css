@@ -1,0 +1,14 @@
+html, body { margin: 0; }
+body { font-family: system-ui, sans-serif; font-size: 15px; color: #1b1b1b; background: #f4f4f2; }
+.lo { max-width: 520px; margin: 0 auto; min-height: 100vh; background: #fff; box-shadow: 0 0 0 1px #ddd; display: flex; flex-direction: column; }
+.lo-kop { display: flex; gap: 12px; align-items: baseline; padding: 10px 14px; background: #18a303; color: #fff; }
+.lo-kop a { color: #fff; margin-left: auto; font-size: 13px; }
+.lo-app { font-weight: 700; }
+.lo-doc { font-size: 13px; opacity: 0.9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lo-status { margin: 0; padding: 6px 14px; font-size: 13px; background: #f3f2f1; border-bottom: 1px solid #e1dfdd; min-height: 1.2em; }
+.lo-status[data-soort="fout"] { background: #fde7e9; color: #a4262c; }
+.lo-status[data-soort="waarschuwing"] { background: #fff4ce; color: #5c4400; }
+.lo-status[data-soort="succes"] { background: #dff6dd; color: #0b5a08; }
+.lo-uitleg { padding: 8px 16px 16px; line-height: 1.5; }
+.lo-uitleg h1 { font-size: 20px; }
+.lo-paneel { flex: 1; }

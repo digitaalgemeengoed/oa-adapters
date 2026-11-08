@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Collabora Online — Office Assistent</title>
+  </head>
+  <body>
+    <div class="co">
+      <header class="co-kop">
+        <span class="co-app">Collabora Online</span>
+        <select id="bestanden" aria-label="Werkbestand"></select>
+        <button type="button" id="nieuw">Nieuw voorbeelddocument</button>
+        <a href="/">Startpagina</a>
+      </header>
+      <p id="status" class="co-status" role="status"></p>
+      <main class="co-werkvlak">
+        <div class="co-editor">
+          <iframe id="editor" name="collabora" title="Collabora Online" allow="clipboard-read *; clipboard-write *; fullscreen"></iframe>
+          <p id="leeg" class="co-leeg">Kies een werkbestand, of maak een nieuw voorbeelddocument.</p>
+        </div>
+        <aside id="paneel" class="co-paneel" aria-label="Assistent"></aside>
+      </main>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
