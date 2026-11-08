@@ -53,6 +53,8 @@ class Kruistest(unittest.TestCase):
         self.assertEqual(zonder_none(k.velden(self.f["objecttype"])), self.ts["velden"])
         self.assertEqual(k.ontbrekend(self.f["objecttype"], self.f["metadata"]), self.ts["ontbrekend"])
         self.assertEqual(k.suggesties(self.f["inhoud"], self.f["metadata"]), self.ts["suggesties"])
+        self.assertEqual([k.suggesties(i, {}) for i in self.f["inhouden"]], self.ts["meerSuggesties"])
+        self.assertEqual(self.ts["meerSuggesties"][0]["naam"], "Fietsenstalling Stationsplein")
 
     def test_omschrijving(self):
         self.assertEqual(k.bestandsomschrijving({"formaat": "odt", "grootte": 24 * 1024 + 512, "weergaven": [{"formaat": "html"}]}), "odt, 25 kB, met html-weergave")

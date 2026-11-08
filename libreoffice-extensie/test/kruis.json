@@ -1,48 +1,340 @@
 {
-  "reeks": [
-    {"bron": 0, "niveau": 1, "tekst": "Besluit op bezwaar & <beroep>", "vet": false, "onderstreept": false, "inline": [], "lijst": null},
-    {"bron": 1, "niveau": 0, "tekst": "Inleiding", "vet": true, "onderstreept": false, "inline": [], "lijst": null},
-    {"bron": 2, "niveau": 0, "tekst": "Zie klik hier en ook de website van de gemeente.", "vet": false, "onderstreept": false,
-     "inline": [{"soort": "link", "tekst": "de website", "href": "https://haarlem.nl/?a=1&b=\"2\"", "index": 0},
-                {"soort": "link", "tekst": "klik hier", "href": "https://example.org", "index": 1},
-                {"soort": "link", "tekst": "verdwenen", "href": "https://weg.nl", "index": 2},
-                {"soort": "afbeelding", "alt": "", "index": 0},
-                {"soort": "afbeelding", "alt": "Logo \"Haarlem\"", "index": 1}], "lijst": null},
-    {"soort": "tabel", "bron": 0, "rijen": [["Naam", "Rol"], ["Femke", "Medewerker"]], "kopregels": 0},
-    {"bron": 3, "niveau": 0, "tekst": "Eerste punt", "inline": [], "lijst": {"genummerd": false}},
-    {"bron": 4, "niveau": 0, "tekst": "Tweede punt met link", "inline": [{"soort": "link", "tekst": "link", "href": "https://a.nl", "index": 0}], "lijst": {"genummerd": false}},
-    {"bron": 5, "niveau": 0, "tekst": "Stap één", "inline": [], "lijst": {"genummerd": true}},
-    {"bron": 6, "niveau": 0, "tekst": "Onderstreept", "vet": false, "onderstreept": true, "inline": [], "lijst": null},
-    {"soort": "tabel", "bron": 1, "rijen": [["A", "B"], ["1", "2"], ["3", "4"]], "kopregels": 1},
-    {"bron": 7, "niveau": 3, "tekst": "Kop drie", "inline": [], "lijst": null}
+ "reeks": [
+  {
+   "bron": 0,
+   "niveau": 1,
+   "tekst": "Besluit op bezwaar & <beroep>",
+   "vet": false,
+   "onderstreept": false,
+   "inline": [],
+   "lijst": null
+  },
+  {
+   "bron": 1,
+   "niveau": 0,
+   "tekst": "Inleiding",
+   "vet": true,
+   "onderstreept": false,
+   "inline": [],
+   "lijst": null
+  },
+  {
+   "bron": 2,
+   "niveau": 0,
+   "tekst": "Zie klik hier en ook de website van de gemeente.",
+   "vet": false,
+   "onderstreept": false,
+   "inline": [
+    {
+     "soort": "link",
+     "tekst": "de website",
+     "href": "https://haarlem.nl/?a=1&b=\"2\"",
+     "index": 0
+    },
+    {
+     "soort": "link",
+     "tekst": "klik hier",
+     "href": "https://example.org",
+     "index": 1
+    },
+    {
+     "soort": "link",
+     "tekst": "verdwenen",
+     "href": "https://weg.nl",
+     "index": 2
+    },
+    {
+     "soort": "afbeelding",
+     "alt": "",
+     "index": 0
+    },
+    {
+     "soort": "afbeelding",
+     "alt": "Logo \"Haarlem\"",
+     "index": 1
+    }
+   ],
+   "lijst": null
+  },
+  {
+   "soort": "tabel",
+   "bron": 0,
+   "rijen": [
+    [
+     "Naam",
+     "Rol"
+    ],
+    [
+     "Femke",
+     "Medewerker"
+    ]
+   ],
+   "kopregels": 0
+  },
+  {
+   "bron": 3,
+   "niveau": 0,
+   "tekst": "Eerste punt",
+   "inline": [],
+   "lijst": {
+    "genummerd": false
+   }
+  },
+  {
+   "bron": 4,
+   "niveau": 0,
+   "tekst": "Tweede punt met link",
+   "inline": [
+    {
+     "soort": "link",
+     "tekst": "link",
+     "href": "https://a.nl",
+     "index": 0
+    }
+   ],
+   "lijst": {
+    "genummerd": false
+   }
+  },
+  {
+   "bron": 5,
+   "niveau": 0,
+   "tekst": "Stap één",
+   "inline": [],
+   "lijst": {
+    "genummerd": true
+   }
+  },
+  {
+   "bron": 6,
+   "niveau": 0,
+   "tekst": "Onderstreept",
+   "vet": false,
+   "onderstreept": true,
+   "inline": [],
+   "lijst": null
+  },
+  {
+   "soort": "tabel",
+   "bron": 1,
+   "rijen": [
+    [
+     "A",
+     "B"
+    ],
+    [
+     "1",
+     "2"
+    ],
+    [
+     "3",
+     "4"
+    ]
+   ],
+   "kopregels": 1
+  },
+  {
+   "bron": 7,
+   "niveau": 3,
+   "tekst": "Kop drie",
+   "inline": [],
+   "lijst": null
+  }
+ ],
+ "segmenten": [
+  [
+   "body/1",
+   "<h2>Inleiding</h2>"
   ],
-  "segmenten": [
-    ["body/1", "<h2>Inleiding</h2>"],
-    ["body/0", "<p>Besluit</p>"],
-    ["body/3", "<table><thead><tr><th>Naam</th><th>Rol</th></tr></thead><tbody><tr><td>Femke</td><td>Medewerker</td></tr></tbody></table>"],
-    ["body/2/0", "<a href=\"https://example.org\">het aanvraagformulier</a>"],
-    ["body/2/3", "<img alt=\"Plattegrond &amp; route\">"],
-    ["body/2/4", "<img alt=\"\">"],
-    ["body/4/1/0", "<a href=\"https://a.nl\">de regeling</a>"],
-    ["body/4/0/0", "<a>x</a>"],
-    ["body/3", "<table><tr><td>x</td></tr></table>"],
-    ["body/9", "<p>x</p>"],
-    ["body/1", "<ul><li>x</li></ul>"],
-    ["body/2/9", "<img alt=\"x\">"]
+  [
+   "body/0",
+   "<p>Besluit</p>"
   ],
-  "doelen": ["body/0", "body/2", "body/2/0", "body/2/1", "body/2/2", "body/2/3", "body/3", "body/4", "body/4/1", "body/4/1/0", "body/4/0/5", "body/20", "body/5/0"],
-  "bevindingen": [
-    [{"id": "a", "plek": {"pad": "body/2/3", "beschrijving": "x"}, "voorstel": {"vraag": {"veld": "alt", "label": "Alt"}}}, "Een plattegrond <met> route"],
-    [{"id": "b", "plek": {"pad": "body/2/0", "beschrijving": "x"}, "voorstel": {"vraag": {"veld": "tekst", "label": "Linktekst"}}}, "het formulier & meer"],
-    [{"id": "c", "plek": {"pad": "body/1", "beschrijving": "x"}, "voorstel": {"vervanging": "<h2>Inleiding</h2>"}}, null],
-    [{"id": "d", "plek": {"pad": "body/4/1/0", "beschrijving": "x"}, "voorstel": {"vraag": {"veld": "tekst", "label": "Linktekst"}}}, "de regeling"],
-    [{"id": "e", "plek": {"pad": "body/0", "beschrijving": "x"}, "voorstel": {"vraag": {"veld": "lang", "label": "Taal"}}}, "nl"]
+  [
+   "body/3",
+   "<table><thead><tr><th>Naam</th><th>Rol</th></tr></thead><tbody><tr><td>Femke</td><td>Medewerker</td></tr></tbody></table>"
   ],
-  "objecttype": {"naam": "document", "schema": {"type": "object", "required": ["vertrouwelijkheid", "naam"],
-    "properties": {"omschrijving": {"type": "string", "title": "Omschrijving", "maxLength": 2000},
-                   "naam": {"type": "string", "title": "Naam", "description": "De naam", "maxLength": 200},
-                   "taal": {"type": "string"},
-                   "vertrouwelijkheid": {"type": "string", "title": "Vertrouwelijkheid", "enum": ["openbaar", "intern"]}}}},
-  "metadata": {"naam": "", "taal": "nl"},
-  "inhoud": {"formaat": "html", "data": "<h1> Besluit  <em>op</em>\n bezwaar </h1><p>x</p>"}
+  [
+   "body/2/0",
+   "<a href=\"https://example.org\">het aanvraagformulier</a>"
+  ],
+  [
+   "body/2/3",
+   "<img alt=\"Plattegrond &amp; route\">"
+  ],
+  [
+   "body/2/4",
+   "<img alt=\"\">"
+  ],
+  [
+   "body/4/1/0",
+   "<a href=\"https://a.nl\">de regeling</a>"
+  ],
+  [
+   "body/4/0/0",
+   "<a>x</a>"
+  ],
+  [
+   "body/3",
+   "<table><tr><td>x</td></tr></table>"
+  ],
+  [
+   "body/9",
+   "<p>x</p>"
+  ],
+  [
+   "body/1",
+   "<ul><li>x</li></ul>"
+  ],
+  [
+   "body/2/9",
+   "<img alt=\"x\">"
+  ]
+ ],
+ "doelen": [
+  "body/0",
+  "body/2",
+  "body/2/0",
+  "body/2/1",
+  "body/2/2",
+  "body/2/3",
+  "body/3",
+  "body/4",
+  "body/4/1",
+  "body/4/1/0",
+  "body/4/0/5",
+  "body/20",
+  "body/5/0"
+ ],
+ "bevindingen": [
+  [
+   {
+    "id": "a",
+    "plek": {
+     "pad": "body/2/3",
+     "beschrijving": "x"
+    },
+    "voorstel": {
+     "vraag": {
+      "veld": "alt",
+      "label": "Alt"
+     }
+    }
+   },
+   "Een plattegrond <met> route"
+  ],
+  [
+   {
+    "id": "b",
+    "plek": {
+     "pad": "body/2/0",
+     "beschrijving": "x"
+    },
+    "voorstel": {
+     "vraag": {
+      "veld": "tekst",
+      "label": "Linktekst"
+     }
+    }
+   },
+   "het formulier & meer"
+  ],
+  [
+   {
+    "id": "c",
+    "plek": {
+     "pad": "body/1",
+     "beschrijving": "x"
+    },
+    "voorstel": {
+     "vervanging": "<h2>Inleiding</h2>"
+    }
+   },
+   null
+  ],
+  [
+   {
+    "id": "d",
+    "plek": {
+     "pad": "body/4/1/0",
+     "beschrijving": "x"
+    },
+    "voorstel": {
+     "vraag": {
+      "veld": "tekst",
+      "label": "Linktekst"
+     }
+    }
+   },
+   "de regeling"
+  ],
+  [
+   {
+    "id": "e",
+    "plek": {
+     "pad": "body/0",
+     "beschrijving": "x"
+    },
+    "voorstel": {
+     "vraag": {
+      "veld": "lang",
+      "label": "Taal"
+     }
+    }
+   },
+   "nl"
+  ]
+ ],
+ "objecttype": {
+  "naam": "document",
+  "schema": {
+   "type": "object",
+   "required": [
+    "vertrouwelijkheid",
+    "naam"
+   ],
+   "properties": {
+    "omschrijving": {
+     "type": "string",
+     "title": "Omschrijving",
+     "maxLength": 2000
+    },
+    "naam": {
+     "type": "string",
+     "title": "Naam",
+     "description": "De naam",
+     "maxLength": 200
+    },
+    "taal": {
+     "type": "string"
+    },
+    "vertrouwelijkheid": {
+     "type": "string",
+     "title": "Vertrouwelijkheid",
+     "enum": [
+      "openbaar",
+      "intern"
+     ]
+    }
+   }
+  }
+ },
+ "metadata": {
+  "naam": "",
+  "taal": "nl"
+ },
+ "inhoud": {
+  "formaat": "html",
+  "data": "<h1> Besluit  <em>op</em>\n bezwaar </h1><p>x</p>"
+ },
+ "inhouden": [
+  {
+   "formaat": "html",
+   "data": "<section data-oa=\"dia\"><h2>Fietsenstalling  Stationsplein</h2></section><section data-oa=\"dia\"><h2>B</h2></section>"
+  },
+  {
+   "formaat": "html",
+   "data": "<section data-oa=\"blad\"><h2>Blad1</h2></section>"
+  }
+ ]
 }

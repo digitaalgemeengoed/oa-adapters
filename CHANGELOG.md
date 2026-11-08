@@ -1,5 +1,12 @@
 # Wijzigingen
 
+## 0.7.0 — 2026-11-08
+
+- **LibreOffice Calc en Impress**: het zijpaneel staat ook in Calc en Impress. `oa_bladen.py` levert een rekenblad als bladen en een presentatie als dia's (secties met de naam of titel als kop) en herstelt op een plek: blad hernoemen, titel van een dia (ook als de dia geen titelvak heeft), alternatieve tekst. Het origineel is .ods of .odp.
+- `LibreOfficeBladenAdapter` voor het webpaneel; de brug kent `/html`, `/segment` en `/plek`.
+- Het eigen paneel (optie 2) werkt nog alleen in Writer en zegt dat in Calc en Impress.
+- Getest in LibreOffice 24.2 met de regels van oa-services 0.3.0 (`test/test_bladen.py`) en met het webpaneel in de zijbalk.
+
 ## 0.6.0 — 2026-11-08
 
 - **Het webpaneel van de server in de zijbalk van Writer** (optie 1, zoals MIRA): een WebKitGTK-webweergave in het vlak van het zijpaneel, met hetzelfde React-paneel als in de browser en Word. Linux met de GTK-weergave van LibreOffice; vereist `python3-gi` en `gir1.2-webkit2-4.1`.

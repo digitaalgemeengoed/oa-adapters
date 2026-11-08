@@ -2,6 +2,7 @@ import { plaatsPaneel } from "@digitaalgemeengoed/oa-paneel";
 import "@digitaalgemeengoed/oa-paneel/style.css";
 import { StructuurAdapter } from "../src/structuur-adapter";
 import { LibreOfficeTekstverwerker } from "../src/libreoffice/tekstverwerker";
+import { LibreOfficeBladenAdapter } from "../src/libreoffice/bladen";
 import { koppelSessie, statusbalk, zorgVoorInlog } from "../src/host/statusbalk";
 import "./libreoffice.css";
 
@@ -59,16 +60,20 @@ async function start() {
   if (!(await zorgVoorInlog())) return;
   if (brug.soort === "aanmelden") return aanmelden(brug);
   const tv = new LibreOfficeTekstverwerker(brug.poort, brug.sleutel);
+  let soort: "tekst" | "rekenblad" | "presentatie" = "tekst";
   try {
     const s = await tv.status();
-    document.getElementById("document")!.textContent = `LibreOffice Writer — ${s.naam}`;
+    soort = s.soort ?? "tekst";
+    const app = soort === "rekenblad" ? "LibreOffice Calc" : soort === "presentatie" ? "LibreOffice Impress" : "LibreOffice Writer";
+    document.getElementById("document")!.textContent = `${app} — ${s.naam}`;
     document.title = `${s.naam} — Office Assistent`;
   } catch (e) {
     meld({ soort: "fout", tekst: (e as Error).message });
     document.getElementById("uitleg")!.hidden = false;
     return;
   }
-  plaatsPaneel(document.getElementById("paneel")!, new StructuurAdapter(tv, meld));
+  const adapter = soort === "tekst" ? new StructuurAdapter(tv, meld) : new LibreOfficeBladenAdapter(tv, soort, meld);
+  plaatsPaneel(document.getElementById("paneel")!, adapter);
 }
 
 /** De sessie voor het zijpaneel naar LibreOffice op deze computer. */

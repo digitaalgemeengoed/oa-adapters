@@ -247,23 +247,32 @@ def vervang_alles(document, html):
         os.unlink(pad)
 
 
+ODF = {
+    "tekst": ("writer8", "odt", "application/vnd.oasis.opendocument.text"),
+    "rekenblad": ("calc8", "ods", "application/vnd.oasis.opendocument.spreadsheet"),
+    "presentatie": ("impress8", "odp", "application/vnd.oasis.opendocument.presentation"),
+}
+
+
 def bestand(document):
-    """Het document als OpenDocument-tekst (.odt), zonder de opslagplek van het document te wijzigen."""
+    """Het document als OpenDocument (.odt, .ods of .odp), zonder de opslagplek van het document te wijzigen."""
     import base64
-    fd, pad = tempfile.mkstemp(suffix=".odt")
+    from oa_bladen import soort_van
+    filter_naam, ext, media = ODF.get(soort_van(document), ODF["tekst"])
+    fd, pad = tempfile.mkstemp(suffix="." + ext)
     os.close(fd)
     try:
         filter_ = PropertyValue()
         filter_.Name = "FilterName"
-        filter_.Value = "writer8"
+        filter_.Value = filter_naam
         document.storeToURL(uno.systemPathToFileUrl(pad), (filter_,))
         with open(pad, "rb") as f:
             data = f.read()
     finally:
         os.unlink(pad)
     return {
-        "formaat": "odt",
-        "mediaType": "application/vnd.oasis.opendocument.text",
+        "formaat": ext,
+        "mediaType": media,
         "codering": "base64",
         "data": base64.b64encode(data).decode("ascii"),
     }

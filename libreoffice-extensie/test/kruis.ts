@@ -30,5 +30,6 @@ const uit = {
   velden: metadateren.velden(f.objecttype),
   ontbrekend: metadateren.bevindingen(f.objecttype, f.metadata),
   suggesties: metadateren.suggesties(f.inhoud, f.metadata),
+  meerSuggesties: f.inhouden.map((i: never) => metadateren.suggesties(i, {})),
 };
 process.stdout.write(JSON.stringify(uit));

@@ -103,8 +103,9 @@ class Assistent(unohelper.Base, XJobExecutor):
                 return
             desktop = self.ctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", self.ctx)
             document = desktop.getCurrentComponent()
-            if document is None or not document.supportsService("com.sun.star.text.TextDocument"):
-                self._bericht("Open eerst een tekstdocument.")
+            soorten = ("com.sun.star.text.TextDocument", "com.sun.star.sheet.SpreadsheetDocument", "com.sun.star.presentation.PresentationDocument")
+            if document is None or not any(document.supportsService(x) for x in soorten):
+                self._bericht("Open eerst een tekst, rekenblad of presentatie.")
                 return
             adres = open_assistent(self.ctx, document)
             shell = self.ctx.ServiceManager.createInstanceWithContext("com.sun.star.system.SystemShellExecute", self.ctx)

@@ -339,9 +339,23 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
                 self.teken()
 
     def _start_eigen(self):
+        import oa_bladen
+        if oa_bladen.soort_van(self.document) != "tekst":
+            # Het eigen paneel kan (nog) alleen tekst; rekenblad en presentatie
+            # gaan via het webpaneel of het paneel in de browser.
+            self.alleen_melding = ("Het eigen paneel van LibreOffice werkt nog alleen in Writer. Voor rekenbladen en presentaties: "
+                                   "kies Office Assistent → Zijpaneel: webpaneel van de server (Linux), of Assistent in de browser openen.")
         self.teken()
         if self._nieuw_model:
             self._op_achtergrond(self.model.start)
+
+    def _open_browser(self):
+        """Het webpaneel in de browser, met een brug naar dit document (zolang dit paneel bestaat)."""
+        from oa_brug import Brug
+        if self.brug is None:
+            self.brug = Brug(self.ctx, self.document, self.basis)
+        shell = self.smgr.createInstanceWithContext("com.sun.star.system.SystemShellExecute", self.ctx)
+        shell.execute(self.brug.paneeladres(), "", 1)  # 1 = URIS_ONLY
 
     def _extern_openen(self, adres):
         if not adres or not adres.startswith("https://"):
@@ -616,7 +630,12 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
             self._leeg()
             self.y = MARGE
             m = self.model
-            if m.fase == "aanmelden":
+            if getattr(self, "alleen_melding", None):
+                self._kopregel()
+                self.regel(self.alleen_melding)
+                self.knop("Assistent in de browser openen", self._open_browser)
+                self.y += self.knop_h + RUIMTE
+            elif m.fase == "aanmelden":
                 self._teken_aanmelden()
             else:
                 self._teken_assistent()

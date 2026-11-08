@@ -50,13 +50,15 @@ def velden(objecttype):
 
 
 _H1 = re.compile(r"<h1[^>]*>([\s\S]*?)</h1>", re.I)
+_DIATITEL = re.compile(r'^\s*<section data-oa="dia"><h2[^>]*>([\s\S]*?)</h2>', re.I)
 
 
 def suggesties(inhoud, huidig):
     """Voorstellen uit de inhoud. De medewerker beslist; een voorstel wordt nooit vanzelf vastgelegd."""
     s = {}
     if inhoud.get("formaat") == "html" and not huidig.get("naam"):
-        m = _H1.search(inhoud.get("data") or "")
+        # De eerste kop 1; in een presentatie de titel van de eerste dia.
+        m = _H1.search(inhoud.get("data") or "") or _DIATITEL.search(inhoud.get("data") or "")
         if m:
             titel = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m.group(1))).strip()
             if len(titel) >= 3:

@@ -24,7 +24,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import unohelper
 from com.sun.star.awt import XCallback
 
+import oa_bladen as ob
 import oa_document as od
+from oa_kern import NietUitvoerbaar
 
 
 class _Hoofdthread(unohelper.Base, XCallback):
@@ -152,8 +154,10 @@ class Brug:
         pad = volledig.split("?", 1)[0]
         try:
             return 200, self.vraag(methode, pad, lichaam, volledig)
-        except od.Gewijzigd as e:
+        except (od.Gewijzigd, ob.Gewijzigd) as e:
             return 409, {"fout": "gewijzigd", "melding": str(e)}
+        except NietUitvoerbaar as e:
+            return 422, {"fout": "niet-uitvoerbaar", "melding": str(e)}
         except _Onbekend:
             return 404, {"fout": "onbekend", "melding": "Deze vraag kent de brug niet."}
         except _Weg:
@@ -165,12 +169,21 @@ class Brug:
     def vraag(self, methode, pad, lichaam, volledig):
         doc = self.document
         try:
-            doc.getText()
+            doc.getDocumentProperties()  # bestaat het document nog?
         except Exception:
             raise _Weg()
         h = self.hoofd.voer_uit
         if methode == "GET" and pad == "/status":
-            return {"naam": h(lambda: od.naam_van(doc)), "versie": "0.5.0"}
+            return {"naam": h(lambda: od.naam_van(doc)), "versie": "0.7.0", "soort": h(lambda: ob.soort_van(doc))}
+        # Rekenbladen en presentaties: html en herstellen op een plek (oa_bladen).
+        if methode == "GET" and pad == "/html":
+            return {"html": h(lambda: ob.html(doc))}
+        if methode == "POST" and pad == "/segment":
+            h(lambda: ob.vervang_segment(doc, lichaam["pad"], lichaam["html"]))
+            return {}
+        if methode == "POST" and pad == "/plek":
+            h(lambda: ob.toon(doc, lichaam["pad"]))
+            return {}
         if methode == "GET" and pad == "/blokken":
             return h(lambda: od.lees_blokken(doc))
         if methode == "GET" and pad == "/bestand":

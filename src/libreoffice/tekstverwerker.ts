@@ -36,7 +36,20 @@ export class LibreOfficeTekstverwerker implements Tekstverwerker {
   }
 
   status() {
-    return this.vraag<{ naam: string; versie: string }>("GET", "/status");
+    return this.vraag<{ naam: string; versie: string; soort?: "tekst" | "rekenblad" | "presentatie" }>("GET", "/status");
+  }
+
+  /** Rekenblad of presentatie als secties (zie oa_bladen.py). */
+  async html(): Promise<string> {
+    return (await this.vraag<{ html: string }>("GET", "/html")).html;
+  }
+
+  async segment(pad: string, html: string): Promise<void> {
+    await this.vraag("POST", "/segment", { pad, html });
+  }
+
+  async plek(pad: string): Promise<void> {
+    await this.vraag("POST", "/plek", { pad });
   }
 
   async leesBlokken(): Promise<Blok[]> {
