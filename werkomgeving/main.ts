@@ -1,4 +1,5 @@
 import { plaatsPaneel } from "@digitaalgemeengoed/oa-paneel";
+import { plaatsAssistentKnoppen } from "../src/host/assistentknoppen";
 import "@digitaalgemeengoed/oa-paneel/style.css";
 import type { Melding } from "@digitaalgemeengoed/oa-contract";
 import { DemoEditorAdapter, type DocumentOpslag } from "../src/index";
@@ -70,6 +71,15 @@ function start() {
 }
 soortKeuze.addEventListener("change", start);
 start();
+
+// De knoppen van de assistent in de werkbalk, zoals in de demo (MIRA).
+const werkvlak = document.querySelector<HTMLElement>(".werkvlak")!;
+const balk = document.querySelector<HTMLElement>(".werkbalk")!;
+balk.append(Object.assign(document.createElement("span"), { className: "scheiding" }));
+plaatsAssistentKnoppen(balk, {
+  toon: () => werkvlak.classList.remove("zonder-paneel"),
+  wissel: () => werkvlak.classList.toggle("zonder-paneel"),
+});
 
 // --- Werkbalk --------------------------------------------------------------
 

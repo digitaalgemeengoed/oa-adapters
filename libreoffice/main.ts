@@ -1,4 +1,4 @@
-import { plaatsPaneel } from "@digitaalgemeengoed/oa-paneel";
+import { plaatsPaneel, type Opdracht } from "@digitaalgemeengoed/oa-paneel";
 import "@digitaalgemeengoed/oa-paneel/style.css";
 import { StructuurAdapter } from "../src/structuur-adapter";
 import { LibreOfficeTekstverwerker } from "../src/libreoffice/tekstverwerker";
@@ -18,7 +18,8 @@ import "./libreoffice.css";
  * inloggen of herladen ze niet kwijtraakt, en halen ze uit de adresbalk.
  */
 const OPSLAG = "oa-libreoffice-brug";
-const meld = statusbalk(document.getElementById("status")!);
+// In de zijbalk alleen een regel als er iets te melden is.
+const meld = statusbalk(document.getElementById("status")!, /[#&]ingebed=1/.test(location.hash) ? "" : "Gereed");
 
 interface Brug {
   soort: "brug" | "aanmelden";
@@ -52,7 +53,10 @@ function leesBrug(): Brug | null {
 
 async function start() {
   const brug = leesBrug();
-  if (brug?.ingebed) document.body.classList.add("ingebed");
+  if (brug?.ingebed) {
+    document.documentElement.classList.add("ingebed");
+    document.body.classList.add("ingebed");
+  }
   if (!brug || !Number.isInteger(brug.poort)) {
     document.getElementById("uitleg")!.hidden = false;
     return;
@@ -73,7 +77,10 @@ async function start() {
     return;
   }
   const adapter = soort === "tekst" ? new StructuurAdapter(tv, meld) : new LibreOfficeBladenAdapter(tv, soort, meld);
-  plaatsPaneel(document.getElementById("paneel")!, adapter);
+  // In de zijbalk van LibreOffice staan rechts al de tabbladen van de zijbalk zelf: de knoppen van de modules dan bovenaan.
+  // Een knop in de werkbalk Assistent van LibreOffice die al was ingedrukt voordat het paneel er stond.
+  const wacht = (window as { __oaWacht?: Opdracht }).__oaWacht;
+  plaatsPaneel(document.getElementById("paneel")!, adapter, { knoppen: brug.ingebed ? "boven" : "rechts", module: wacht });
 }
 
 /** De sessie voor het zijpaneel naar LibreOffice op deze computer. */

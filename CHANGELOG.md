@@ -1,5 +1,16 @@
 # Wijzigingen
 
+## 0.9.0 — 2026-11-09
+
+**Knoppen van de assistent in de werkbalk**, in elke werkomgeving: Paneel, de modules, Beoordelen (zoals de demo).
+
+- LibreOffice (Writer, Calc, Impress): werkbalk **Assistent** (`Addons.xcu`, `*WindowState.xcu`, pictogrammen in `icons/`). Een knop opent de zijbalk op de module; het webpaneel krijgt de opdracht via WebKit. In de zijbalk staan de knoppen van het paneel bovenaan (rechts staan de tabbladen van LibreOffice zelf). Extensie 0.8.0.
+- Collabora: knoppen in de werkbalk van Collabora zelf (postMessage `Insert_Button`, terug `Clicked_Button`); pictogrammen van ons eigen adres (`statisch/iconen/`).
+- Demo-werkomgeving: een groep knoppen in de werkbalk.
+- Word, Excel en PowerPoint: functies voor de knoppen op het tabblad Assistent (gedeelde runtime; de integratielaag 0.7.0 levert het manifest).
+- `src/host/assistentknoppen.ts`, `scripts/maak-iconen.mjs`.
+- LibreOffice: een knop werkt in het venster waarin hij werd ingedrukt; het webpaneel tekent na het openklappen opnieuw (in Calc bleef de bovenrand anders leeg).
+
 ## 0.8.0 — 2026-11-08
 
 - **Excel en PowerPoint**: de invoegtoepassing werkt ook in Excel en PowerPoint (één manifest, één takenvenster; de integratielaag 0.6.0 levert het manifest). `ExcelAdapter` en `PowerPointAdapter` (`src/office/`) leveren bladen en dia's als secties, zoals LibreOffice en Collabora, en herstellen op een plek: blad hernoemen, titel van een dia (zonder titel: een tekstvak "Titel"), alternatieve tekst. Origineel als xlsx of pptx; de afdruk in de instellingen van de invoegtoepassing.

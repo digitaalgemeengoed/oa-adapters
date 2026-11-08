@@ -1,4 +1,5 @@
-import { plaatsPaneel } from "@digitaalgemeengoed/oa-paneel";
+import { plaatsPaneel, stuurOpdracht } from "@digitaalgemeengoed/oa-paneel";
+import { assistentKnoppen } from "../src/host/assistentknoppen";
 import "@digitaalgemeengoed/oa-paneel/style.css";
 import { CollaboraAdapter, type CollaboraVenster, type Formaat } from "../src/collabora/adapter";
 import { statusbalk, zorgVoorInlog } from "../src/host/statusbalk";
@@ -44,8 +45,17 @@ window.addEventListener("message", (e) => {
   if (b.MessageId === "App_LoadingStatus") {
     if (b.Values?.Status === "Frame_Ready") stuur({ MessageId: "Host_PostmessageReady" });
     if (b.Values?.Status === "Document_Loaded") {
+      voegKnoppenToe();
       geladen?.();
       geladen = null;
+    }
+  }
+  if (b.MessageId === "Clicked_Button" && typeof b.Values?.id === "string" && b.Values.id.startsWith("oa-")) {
+    const id = b.Values.id.slice(3);
+    if (id === "paneel") werkvlak.classList.toggle("zonder-paneel");
+    else {
+      werkvlak.classList.remove("zonder-paneel");
+      stuurOpdracht(id as Parameters<typeof stuurOpdracht>[0]);
     }
   }
   if (b.MessageId === "Action_Save_Resp") {
@@ -53,6 +63,19 @@ window.addEventListener("message", (e) => {
     opgeslagen = null;
   }
 });
+
+/**
+ * De knoppen van de assistent in de werkbalk van Collabora zelf (postMessage
+ * Insert_Button). Collabora stuurt bij een klik Clicked_Button terug. De
+ * pictogrammen komen van ons eigen adres; Collabora staat dat toe in zijn
+ * Content-Security-Policy omdat wij de WOPI-host zijn.
+ */
+const werkvlak = document.querySelector<HTMLElement>(".co-werkvlak")!;
+function voegKnoppenToe() {
+  for (const k of assistentKnoppen()) {
+    stuur({ MessageId: "Insert_Button", Values: { id: `oa-${k.id}`, imgurl: `${location.origin}/iconen/${k.id}.svg`, hint: `Assistent: ${k.naam}`, label: `Assistent: ${k.naam}`, mobile: false } });
+  }
+}
 
 /** Opent een werkbestand in het iframe: formulier met de toegangssleutel, zoals WOPI dat wil. */
 async function openInEditor(id: string): Promise<void> {

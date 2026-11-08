@@ -175,6 +175,12 @@ class Webweergave:
             ucm.connect("script-message-received::oaBrug", self._bericht)
         p = ouder.getPosSize()
         self.maat(p.Width, p.Height)
+        # Een opdracht van de werkbalk (zie stuur) die er was voordat de
+        # pagina klaar was: opnieuw sturen zodra hij geladen is.
+        self.wacht = None
+        from gi.repository import WebKit2 as _W
+        self.web.connect("load-changed", lambda _w, ev: ev == _W.LoadEvent.FINISHED and self.wacht and self._voer_uit(self._opdrachtscript(self.wacht)) and False)
+        self.vlak = vlak
         vlak.put(self.web, 0, 0)
         self.web.show()
         self.web.load_uri(adres)
@@ -204,15 +210,30 @@ class Webweergave:
         threading.Thread(target=werk, name="oa-kanaal", daemon=True).start()
 
     def _antwoord(self, nummer, status, uit):
-        script = "window.__oaBrugAntwoord && window.__oaBrugAntwoord(%s, %s)" % (json.dumps(nummer), json.dumps({"status": status, "lichaam": uit}))
+        self._voer_uit("window.__oaBrugAntwoord && window.__oaBrugAntwoord(%s, %s)" % (json.dumps(nummer), json.dumps({"status": status, "lichaam": uit})))
+        return False
+
+    def _voer_uit(self, script):
         try:
             if hasattr(self.web, "evaluate_javascript"):
                 self.web.evaluate_javascript(script, -1, None, None, None, None, None)
             else:
                 self.web.run_javascript(script, None, None, None)
         except Exception as e:
-            log("antwoord niet bezorgd", e)
+            log("script niet uitgevoerd", e)
         return False
+
+    @staticmethod
+    def _opdrachtscript(opdracht):
+        # Staat het paneel er al, dan luistert het naar "oa-assistent"; anders
+        # neemt de pagina __oaWacht mee als eerste module (libreoffice/main.ts).
+        o = json.dumps(opdracht)
+        return "window.__oaWacht = %s; window.dispatchEvent(new CustomEvent('oa-assistent', {detail: %s}));" % (o, o)
+
+    def stuur(self, opdracht):
+        """Een knop in de werkbalk: toon een module, of beoordeel (hoofdthread)."""
+        self.wacht = opdracht
+        self._voer_uit(self._opdrachtscript(opdracht))
 
     def _pak_focus(self):
         top = self.web.get_toplevel()
@@ -224,6 +245,27 @@ class Webweergave:
     def maat(self, breedte, hoogte):
         if breedte > 0 and hoogte > 0:
             self.web.set_size_request(breedte, hoogte)
+
+    def ververs(self, breedte, hoogte):
+        """
+        Opnieuw tekenen na zichtbaar worden. Een paneel dat ontstaat terwijl de
+        zijbalk ingeklapt is (een knop in de werkbalk), tekende in Calc de
+        bovenste rand niet; een kleine maatwisseling, zoals bij het vergroten
+        van het venster, verhelpt dat.
+        """
+        if breedte <= 0 or hoogte <= 1:
+            return
+        from gi.repository import GLib
+        self.vlak.move(self.web, 0, 1)
+        self.web.set_size_request(breedte, hoogte - 1)
+
+        def terug():
+            self.vlak.move(self.web, 0, 0)
+            self.web.set_size_request(breedte, hoogte)
+            self.web.queue_draw()
+            return False
+
+        GLib.timeout_add(60, terug)
 
     def herlaad(self):
         self.web.reload()

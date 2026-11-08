@@ -18,6 +18,7 @@ import traceback
 
 import uno
 import unohelper
+from com.sun.star.awt import XCallback
 from com.sun.star.task import XJobExecutor
 from com.sun.star.ui import XUIElementFactory
 
@@ -81,6 +82,22 @@ def stop_assistent():
             _brug = None
 
 
+class _Taak(unohelper.Base, XCallback):
+    def __init__(self, functie):
+        self.functie = functie
+
+    def notify(self, _data):
+        try:
+            self.functie()
+        except Exception:
+            traceback.print_exc()
+
+
+def _later(ctx, functie):
+    """Op de hoofdthread uitvoeren, na de huidige gebeurtenis (AsyncCallback)."""
+    ctx.ServiceManager.createInstanceWithContext("com.sun.star.awt.AsyncCallback", ctx).addCallback(_Taak(functie), None)
+
+
 class Assistent(unohelper.Base, XJobExecutor):
     """Het menu "Office Assistent" in Writer."""
 
@@ -91,6 +108,37 @@ class Assistent(unohelper.Base, XJobExecutor):
         try:
             if opdracht == "tonen":
                 self._toon_zijpaneel()
+                return
+            if opdracht == "paneel":
+                frame = self._frame()
+                _later(self.ctx, lambda: self._wissel_zijpaneel(frame))
+                return
+            if opdracht.startswith("module:"):
+                # Een knop in de werkbalk Assistent: zijbalk tonen, dan de
+                # module. Na afloop van de klik: tijdens het afhandelen van de
+                # werkbalkknop klapt de zijbalk anders niet open.
+                frame = self._frame()
+                module = opdracht.split(":", 1)[1]
+
+                def daarna():
+                    self._toon_zijpaneel(frame)
+                    import oa_zijpaneel
+                    p = oa_zijpaneel.paneel_van(frame.getController().getModel())
+                    if p is not None:
+                        p.opdracht(module)
+                    # Ontstaat het paneel pas nu, dan klapt LibreOffice de
+                    # zijbalk soms meteen weer in. Na een moment nog eens.
+                    threading.Timer(1.5, lambda: _later(self.ctx, nogmaals)).start()
+
+                def nogmaals():
+                    if not self._deck_actief(frame):
+                        self._toon_zijpaneel(frame)
+                        import oa_zijpaneel
+                        p = oa_zijpaneel.paneel_van(frame.getController().getModel())
+                        if p is not None:
+                            p.opdracht(module)
+
+                _later(self.ctx, daarna)
                 return
             if opdracht in ("paneel-web", "paneel-eigen"):
                 _zet_voorkeur(paneel=opdracht.split("-")[1])
@@ -114,9 +162,41 @@ class Assistent(unohelper.Base, XJobExecutor):
             traceback.print_exc()
             self._bericht("De assistent kon niet starten: %s" % e)
 
-    def _toon_zijpaneel(self):
+    def _frame(self):
+        """Het venster waarin de knop werd ingedrukt: het actieve, anders het laatst actieve."""
         desktop = self.ctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", self.ctx)
-        controller = desktop.getCurrentFrame().getController()
+        frames = desktop.getFrames()
+        for i in range(frames.getCount()):
+            f = frames.getByIndex(i)
+            if f.isActive():
+                return f
+        return desktop.getCurrentFrame()
+
+    def _document(self):
+        frame = self._frame()
+        return frame.getController().getModel() if frame is not None else None
+
+    def _wissel_zijpaneel(self, frame=None):
+        """Knop Paneel: het tabblad Assistent in de zijbalk tonen, of de zijbalk inklappen als het al open is."""
+        frame = frame or self._frame()
+        zijbalk = frame.getController().getSidebar()
+        decks = zijbalk.getDecks()
+        deck = decks.getByName(DECK) if decks.hasByName(DECK) else None
+        if zijbalk.isVisible() and deck is not None and deck.isActive():
+            deck.activate(False)  # klapt de zijbalk in tot de tabbladen
+        else:
+            self._toon_zijpaneel(frame)
+
+    def _deck_actief(self, frame):
+        try:
+            zijbalk = frame.getController().getSidebar()
+            decks = zijbalk.getDecks()
+            return zijbalk.isVisible() and decks.hasByName(DECK) and decks.getByName(DECK).isActive()
+        except Exception:
+            return False
+
+    def _toon_zijpaneel(self, frame=None):
+        controller = (frame or self._frame()).getController()
         zijbalk = controller.getSidebar()
         zijbalk.setVisible(True)
         decks = zijbalk.getDecks()

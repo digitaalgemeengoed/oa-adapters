@@ -174,6 +174,15 @@ def model_voor(ctx, document, basis, hoofd):
     return m, nieuw
 
 
+# Open panelen per document, voor de knoppen in de werkbalk.
+_panelen = {}
+
+
+def paneel_van(document):
+    with _slot:
+        return _panelen.get(document.RuntimeUID)
+
+
 def vergeet_document(document):
     with _slot:
         _modellen.pop(document.RuntimeUID, None)
@@ -250,7 +259,7 @@ class _Formaat(unohelper.Base, XWindowListener):
         pass
 
     def windowShown(self, ev):
-        pass
+        self.paneel.bij_zichtbaar()
 
     def windowHidden(self, ev):
         pass
@@ -283,6 +292,7 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
         self.weg = False
         self._hertekenen_gepland = False
         self.antwoordvelden = {}
+        self._wacht = None
 
         tk = self.smgr.createInstanceWithContext("com.sun.star.awt.Toolkit", ctx)
         self.vlak = self.smgr.createInstanceWithContext("com.sun.star.awt.UnoControlContainer", ctx)
@@ -295,6 +305,8 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
 
         self._meet()
         self.model, self._nieuw_model = model_voor(ctx, self.document, self.basis, self.hoofd)
+        with _slot:
+            _panelen[self.document.RuntimeUID] = self
         self.model.bij_wijziging = self.wijziging
         # Optie 1: het webpaneel van de server in een webweergave. Lukt dat
         # niet (of staat "paneel": "eigen" in de instellingen), dan het eigen
@@ -321,6 +333,11 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
             opslag = os.path.join(os.path.expanduser("~"), ".local", "share", "office-assistent", "webweergave")
             self.web = oa_webview.Webweergave(self.ouder, adres, opslag, self._extern_openen, self.brug, self.basis)
             self.modus = "web"
+            if self._wacht:
+                self.web.stuur(self._wacht)
+            p = self.ouder.getPosSize()
+            from gi.repository import GLib
+            GLib.timeout_add(400, lambda: self.web is not None and self.web.ververs(p.Width, p.Height) and False)
             self._vraag_opmaak()
         except Exception as e:
             log("webpaneel lukt niet:", e)
@@ -397,8 +414,19 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
     def getMinimalWidth(self):
         return 240
 
+    def opdracht(self, opdracht):
+        """Een knop in de werkbalk. Het webpaneel toont de module; het eigen paneel heeft geen modules."""
+        if self.modus == "web" and self.web is not None:
+            self.hoofd.later(lambda: self.web.stuur(opdracht))
+            self._ververs_straks()
+        else:
+            self._wacht = opdracht  # webpaneel nog in aanbouw; het eigen paneel negeert het
+
     def dispose(self):
         self.weg = True
+        with _slot:
+            if _panelen.get(self.document.RuntimeUID) is self:
+                _panelen.pop(self.document.RuntimeUID, None)
         if self.web is not None:
             self.web.weg()
         if self.brug is not None:
@@ -431,6 +459,25 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
                 self.teken()
 
         self.hoofd.later(doe)
+
+    def _ververs_straks(self, ms=500):
+        """Na het openklappen van de zijbalk: opnieuw tekenen als de maat vaststaat."""
+        def doe():
+            if self.web is not None and not self.weg:
+                p = self.ouder.getPosSize()
+                self.web.ververs(p.Width, p.Height)
+            return False
+
+        def plan():
+            from gi.repository import GLib
+            GLib.timeout_add(ms, doe)
+
+        self.hoofd.later(plan)
+
+    def bij_zichtbaar(self):
+        if self.web is not None:
+            p = self.ouder.getPosSize()
+            self.hoofd.later(lambda: self.web.ververs(p.Width, p.Height))
 
     def bij_formaat(self):
         if self.web is not None:

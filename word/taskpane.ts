@@ -1,5 +1,5 @@
 /// <reference types="office-js" />
-import { plaatsPaneel } from "@digitaalgemeengoed/oa-paneel";
+import { plaatsPaneel, stuurOpdracht, type Opdracht } from "@digitaalgemeengoed/oa-paneel";
 import "@digitaalgemeengoed/oa-paneel/style.css";
 import { StructuurAdapter } from "../src/structuur-adapter";
 import { WordTekstverwerker } from "../src/word/tekstverwerker";
@@ -27,10 +27,41 @@ function maakAdapter() {
   return new StructuurAdapter(new WordTekstverwerker(), meld);
 }
 
+let geplaatst = false;
+let gewenst: Opdracht | undefined;
+
 function start(sessie: string) {
   aanmelden.hidden = true;
   const adapter = maakAdapter();
-  plaatsPaneel(document.getElementById("paneel")!, adapter, { sessie });
+  plaatsPaneel(document.getElementById("paneel")!, adapter, { sessie, module: gewenst });
+  geplaatst = true;
+}
+
+/**
+ * De knoppen op het tabblad Assistent (manifest, ExecuteFunction). Het
+ * takenvenster draait in een gedeelde runtime: deze pagina is er al voordat
+ * het venster zichtbaar is. Een knop toont het venster en de module; is het
+ * paneel er nog niet (eerst inloggen), dan opent het straks met die module.
+ */
+let zichtbaar = false;
+function koppelKnoppen() {
+  if (!Office.actions?.associate || !Office.context.requirements.isSetSupported("SharedRuntime", "1.1")) return;
+  Office.addin.onVisibilityModeChanged((e) => {
+    zichtbaar = e.visibilityMode === Office.VisibilityMode.taskpane;
+  });
+  const klaar = (e: Office.AddinCommands.Event) => e.completed();
+  Office.actions.associate("oa_paneel", async (e: Office.AddinCommands.Event) => {
+    await (zichtbaar ? Office.addin.hide() : Office.addin.showAsTaskpane()).catch(() => undefined);
+    klaar(e);
+  });
+  for (const o of ["ovz", "ond", "meta", "toeg", "anon", "clas", "waar", "flow", "beoordelen"] as Opdracht[]) {
+    Office.actions.associate(`oa_${o}`, async (e: Office.AddinCommands.Event) => {
+      await Office.addin.showAsTaskpane().catch(() => undefined);
+      if (geplaatst) stuurOpdracht(o);
+      else gewenst = o;
+      klaar(e);
+    });
+  }
 }
 
 function inloggen() {
@@ -61,6 +92,7 @@ function inloggen() {
 
 Office.onReady(async (info) => {
   host = info.host;
+  koppelKnoppen();
   const eis: Partial<Record<Office.HostType, [string, string, string]>> = {
     [Office.HostType.Word]: ["Word", "WordApi", "1.3"],
     [Office.HostType.Excel]: ["Excel", "ExcelApi", "1.9"],

@@ -43,5 +43,148 @@
         </node>
       </node>
     </node>
+    <!-- De werkbalk Assistent, zoals in de demo (MIRA): Paneel, de modules, Beoordelen. -->
+    <node oor:name="OfficeToolBar">
+      <node oor:name="nl.digitaalgemeengoed.oa.werkbalk" oor:op="replace">
+          <node oor:name="k00" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?paneel</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Paneel</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k01" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>private:separator</value></prop>
+          </node>
+          <node oor:name="k02" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:ovz</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Overzicht</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k03" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:ond</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Onderdelen (volgt)</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k04" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:meta</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Metadateren</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k05" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:toeg</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Toegankelijkheid</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k06" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:anon</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Anonimiseren (volgt)</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k07" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:clas</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Classificeren (volgt)</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k08" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:waar</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Waarmerken (volgt)</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k09" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:flow</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Workflow (volgt)</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+          <node oor:name="k10" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>private:separator</value></prop>
+          </node>
+          <node oor:name="k11" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:beoordelen</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Beoordelen</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
+          </node>
+      </node>
+    </node>
+    <node oor:name="Images">
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.paneel" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?paneel</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-paneel-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-paneel-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.ovz" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:ovz</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-ovz-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-ovz-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.ond" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:ond</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-ond-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-ond-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.meta" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:meta</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-meta-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-meta-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.toeg" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:toeg</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-toeg-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-toeg-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.anon" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:anon</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-anon-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-anon-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.clas" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:clas</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-clas-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-clas-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.waar" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:waar</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-waar-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-waar-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.flow" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:flow</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-flow-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-flow-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.beoordelen" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:beoordelen</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-beoordelen-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-beoordelen-26.png</value></prop>
+        </node>
+      </node>
+    </node>
   </node>
 </oor:component-data>

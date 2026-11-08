@@ -38,7 +38,7 @@ Hetzelfde manifest en takenvenster werken in **Excel** en **PowerPoint**; het ta
 
 ### LibreOffice
 
-`libreoffice-extensie/` is een Python-extensie (`.oxt`). De assistent staat als tabblad **Assistent** in de zijbalk van Writer, op twee manieren.
+`libreoffice-extensie/` is een Python-extensie (`.oxt`). De assistent staat als tabblad **Assistent** in de zijbalk van Writer, Calc en Impress, op twee manieren. De werkbalk **Assistent** heeft dezelfde knoppen als de demo: Paneel, de modules en Beoordelen; een knop opent de zijbalk op die module.
 
 **Het webpaneel van de server (standaard, optie 1).** Zoals MIRA het beschrijft: één paneel, in elke werkomgeving hetzelfde. De extensie hangt een WebKitGTK-webweergave in het vlak van het zijpaneel (`pythonpath/oa_webview.py`). Daarin draait hetzelfde React-paneel als in de browser en in Word, van `/libreoffice` op de integratielaag. Inloggen gaat in de webweergave zelf (cookie, eigen opslag in `~/.local/share/office-assistent`).
 
@@ -73,6 +73,19 @@ De extensie is getest tegen een echte LibreOffice (headless): start `soffice --h
 `test/office.test.ts` toetst de Excel- en PowerPoint-adapter tegen een nagebootst Office.js en de echte regels van oa-services.
 
 **Nog niet getest:** de invoegtoepassing in een echte Word, Excel of PowerPoint (Office.js is hier niet te draaien) en Collabora Online zelf (de pagina en de WOPI-host wel, tegen een nagebootste Collabora die met LibreOffice omzet).
+
+## Knoppen in de werkbalk
+
+In elke werkomgeving dezelfde knoppen als in de demo (MIRA): **Paneel**, de modules, **Beoordelen**. Een knop toont het paneel en stuurt het een opdracht (`stuurOpdracht` in oa-paneel).
+
+| Werkomgeving | Hoe |
+|---|---|
+| Demo-werkomgeving | Een groep in de eigen werkbalk (`src/host/assistentknoppen.ts`). |
+| Collabora Online | In de werkbalk van Collabora zelf: postMessage `Insert_Button`, terug `Clicked_Button`. De pictogrammen komen van ons eigen adres (`/iconen/`), zoals Collabora dat eist. Getest tegen een nagebootste Collabora; welke werkbalk een echte Collabora gebruikt (klassiek of het lint), moet blijken. |
+| Word, Excel, PowerPoint | Een eigen tabblad **Assistent** in het lint. De knoppen roepen functies aan in het takenvenster, dat in een gedeelde runtime draait (SharedRuntime 1.1). Niet getest. |
+| LibreOffice | Werkbalk **Assistent** (`Addons.xcu`, `WriterWindowState.xcu` enz.). Het eigen paneel (optie 2) heeft geen modules; de knoppen tonen dan alleen de zijbalk. |
+
+`scripts/maak-iconen.mjs` maakt de pictogrammen (svg en png) uit dezelfde tekeningen als het paneel.
 
 ## Een adapter toevoegen
 
