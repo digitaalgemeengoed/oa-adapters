@@ -265,7 +265,7 @@ class _Formaat(unohelper.Base, XWindowListener):
 
 
 class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
-    def __init__(self, ctx, frame, ouder, zijbalk, url, basis):
+    def __init__(self, ctx, frame, ouder, zijbalk, url, basis, soort="web"):
         self.ctx = ctx
         self.smgr = ctx.ServiceManager
         self.frame = frame
@@ -294,11 +294,60 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
         ouder.addWindowListener(_Formaat(self))
 
         self._meet()
-        self.model, nieuw = model_voor(ctx, self.document, self.basis, self.hoofd)
+        self.model, self._nieuw_model = model_voor(ctx, self.document, self.basis, self.hoofd)
         self.model.bij_wijziging = self.wijziging
+        # Optie 1: het webpaneel van de server in een webweergave. Lukt dat
+        # niet (of staat "paneel": "eigen" in de instellingen), dan het eigen
+        # paneel met de schermelementen van LibreOffice (optie 2).
+        self.web = None
+        self.brug = None
+        self.modus = "web-bezig" if soort == "web" else "eigen"
+        if self.modus == "web-bezig":
+            self.vlak.setVisible(False)
+            self.hoofd.later(self._start_web)
+        else:
+            self._start_eigen()
+
+    # -- webpaneel of eigen paneel --------------------------------------------
+
+    def _start_web(self):
+        if self.weg:
+            return
+        import oa_webview
+        from oa_brug import Brug
+        try:
+            self.brug = Brug(self.ctx, self.document, self.basis)
+            adres = self.brug.paneeladres() + "&ingebed=1"
+            opslag = os.path.join(os.path.expanduser("~"), ".local", "share", "office-assistent", "webweergave")
+            self.web = oa_webview.Webweergave(self.ouder, adres, opslag, self._extern_openen, self.brug, self.basis)
+            self.modus = "web"
+            self._vraag_opmaak()
+        except Exception as e:
+            log("webpaneel lukt niet:", e)
+            if self.brug is not None:
+                self.brug.stop()
+                self.brug = None
+            self.modus = "eigen"
+            if not isinstance(e, oa_webview.NietBeschikbaar):
+                traceback.print_exc()
+            self.vlak.setVisible(True)
+            self._start_eigen()
+            if not self.model.melding:
+                reden = str(e).strip().rstrip(".")
+                reden = reden[:1].lower() + reden[1:]
+                self.model.melding = {"soort": "info", "tekst": "Het webpaneel kan hier niet: %s. Je ziet het eigen paneel van LibreOffice; dat doet hetzelfde." % reden}
+                self.teken()
+
+    def _start_eigen(self):
         self.teken()
-        if nieuw:
+        if self._nieuw_model:
             self._op_achtergrond(self.model.start)
+
+    def _extern_openen(self, adres):
+        if not adres or not adres.startswith("https://"):
+            return
+        shell = self.smgr.createInstanceWithContext("com.sun.star.system.SystemShellExecute", self.ctx)
+        shell.execute(adres, "", 1)  # 1 = URIS_ONLY
 
     # -- XUIElement / XToolPanel / XSidebarPanel ---------------------------------
 
@@ -324,6 +373,9 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
         return None
 
     def getHeightForWidth(self, breedte):
+        if self.modus != "eigen":
+            # De webweergave scrolt zelf: neem de hele hoogte van de zijbalk.
+            return LayoutSize(300, 100000, 300)
         log("getHeightForWidth", breedte, "->", self.hoogte)
         self._nieuwe_breedte(breedte)
         return LayoutSize(self.hoogte, self.hoogte, self.hoogte)
@@ -333,6 +385,10 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
 
     def dispose(self):
         self.weg = True
+        if self.web is not None:
+            self.web.weg()
+        if self.brug is not None:
+            self.brug.stop()
         if self.model.bij_wijziging == self.wijziging:
             self.model.bij_wijziging = lambda: None
         try:
@@ -363,6 +419,12 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
         self.hoofd.later(doe)
 
     def bij_formaat(self):
+        if self.web is not None:
+            p = self.ouder.getPosSize()
+            self.web.maat(p.Width, p.Height)
+            return
+        if self.modus != "eigen":
+            return
         self._nieuwe_breedte(self.ouder.getPosSize().Width)
 
     def _nieuwe_breedte(self, b):
@@ -546,6 +608,8 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
     # -- tekenen --------------------------------------------------------------------
 
     def teken(self, melden=True):
+        if self.modus != "eigen":
+            return
         oud = self.hoogte
         try:
             self.vlak.setVisible(False)

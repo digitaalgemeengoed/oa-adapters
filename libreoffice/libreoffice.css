@@ -12,3 +12,8 @@ body { font-family: system-ui, sans-serif; font-size: 15px; color: #1b1b1b; back
 .lo-uitleg { padding: 8px 16px 16px; line-height: 1.5; }
 .lo-uitleg h1 { font-size: 20px; }
 .lo-paneel { flex: 1; }
+
+/* In de zijbalk van Writer (webweergave): geen kopbalk, de volle breedte. */
+.ingebed { background: #fff; }
+.ingebed .lo { max-width: none; box-shadow: none; }
+.ingebed .lo-kop { display: none; }

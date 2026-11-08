@@ -34,17 +34,25 @@ Een invoegtoepassing met een takenvenster. In Word voor het web staat dat venste
 
 ### LibreOffice
 
-`libreoffice-extensie/` is een Python-extensie (`.oxt`) met twee manieren om de assistent te gebruiken.
+`libreoffice-extensie/` is een Python-extensie (`.oxt`). De assistent staat als tabblad **Assistent** in de zijbalk van Writer, op twee manieren.
 
-**Het zijpaneel (standaard).** Een eigen tabblad **Assistent** in de zijbalk van Writer, naast de Navigator. LibreOffice heeft geen browser in de zijbalk, dus dit paneel is gebouwd met de eigen schermelementen van LibreOffice (`pythonpath/oa_zijpaneel.py`). Het doet hetzelfde als het paneel in de browser: metadata met voorstellen, registreren (het .odt is de versie, de html de weergave), versies vastleggen, toegankelijkheid beoordelen, een plek tonen en herstellen.
+**Het webpaneel van de server (standaard, optie 1).** Zoals MIRA het beschrijft: één paneel, in elke werkomgeving hetzelfde. De extensie hangt een WebKitGTK-webweergave in het vlak van het zijpaneel (`pythonpath/oa_webview.py`). Daarin draait hetzelfde React-paneel als in de browser en in Word, van `/libreoffice` op de integratielaag. Inloggen gaat in de webweergave zelf (cookie, eigen opslag in `~/.local/share/office-assistent`).
 
-- `oa_kern.py` bevat de regels van `oa-kern` (metadateren, herstellen) en `src/semantisch.ts` in Python. `test/test_kern.py` vergelijkt beide op dezelfde voorbeelden (`test/kruis.json`): wie de ene wijzigt, ziet de test falen tot de andere mee is.
-- `oa_paneelmodel.py` is wat het paneel weet en doet, zonder UNO (getest met een nepdocument); `oa_verbinding.py` praat met de integratielaag, met de sessie als `Authorization: Bearer` en `x-oa-verzoek`, net als de Word-invoegtoepassing.
-- **Aanmelden** gaat één keer via de browser (Keycloak met tweede factor). De extensie start dan een server op `127.0.0.1` die alleen de sessiesleutel aanneemt, met een eenmalige sleutel na het `#` van `/libreoffice#aanmelden=…`, alleen van de eigen integratielaag, binnen tien minuten. De pagina vraagt de sessie op bij `/api/auth/koppel` en geeft hem door. De sessie staat alleen in het geheugen van LibreOffice.
-- Acties lopen in een eigen thread; het document wordt alleen op de hoofdthread gelezen en gewijzigd (`AsyncCallback`). Het paneel tekent zich daarna opnieuw, nooit midden in een opmaakronde van de zijbalk.
-- Getest in een echte LibreOffice 24.2 (GTK en X11) op een virtueel scherm: aanmelden, registreren, beoordelen, tonen, herstellen (kop, alternatieve tekst, kopregel), versie vastleggen, opslaan en heropenen.
+- Het document bereikt het paneel via de lokale brug (`pythonpath/oa_brug.py`). In de webweergave gaat dat niet over http: een https-pagina mag geen http naar `127.0.0.1`. WebKit biedt daar een berichtkanaal (`window.webkit.messageHandlers.oaBrug`), alleen voor pagina's van de eigen integratielaag en met de sleutel van de brug; `src/libreoffice/tekstverwerker.ts` kiest dat kanaal vanzelf.
+- Toetsen: LibreOffice geeft toetsaanslagen aan het GTK-onderdeel met de focus; een klik in het paneel geeft de webweergave de focus, een klik in het document geeft hem terug.
+- Kan nu op **Linux** met de GTK-weergave van LibreOffice (Ubuntu, Debian, Fedora), met `python3-gi` en `gir1.2-webkit2-4.1`. Getest op X11. De webweergave zit in hetzelfde proces en het vlak wordt gevonden aan zijn plaats in de zijbalk; er zit niets X11-specifieks in, dus naar verwachting werkt het ook op Wayland. Dat is niet getest.
+- **Windows en macOS: nog niet.** Daar valt het zijpaneel terug op het eigen paneel. Windows kan later met WebView2, zoals de Outlook-adapter in MIRA.
 
-![Het zijpaneel Assistent in LibreOffice Writer](docs/zijpaneel-libreoffice.png)
+![Het webpaneel van de server in de zijbalk van LibreOffice Writer](docs/zijpaneel-libreoffice.png)
+
+**Het eigen paneel van LibreOffice (alternatief, optie 2).** Gebouwd met de eigen schermelementen van LibreOffice (`pythonpath/oa_zijpaneel.py`), met dezelfde functies. Stabieler (geen webweergave nodig, werkt overal waar LibreOffice werkt), maar een tweede gebruikersinterface om te onderhouden. Kiezen: **Office Assistent → Zijpaneel: webpaneel van de server** of **Zijpaneel: eigen paneel van LibreOffice** (per gebruiker, in `~/.config/office-assistent/voorkeur.json`); een gemeente kan de standaard zetten met `"paneel": "eigen"` in `instellingen.json`. Kan de webweergave niet, dan zegt het eigen paneel dat erbij.
+
+- `oa_kern.py` bevat de regels van `oa-kern` (metadateren, herstellen) en `src/semantisch.ts` in Python. `test/test_kern.py` vergelijkt beide op dezelfde voorbeelden (`test/kruis.json`).
+- `oa_paneelmodel.py` is wat het eigen paneel weet en doet, zonder UNO; `oa_verbinding.py` praat met de integratielaag met de sessie als `Authorization: Bearer`. Aanmelden gaat één keer via de browser (`/libreoffice#aanmelden=…`, de sessie van `/api/auth/koppel` naar een eenmalige server op `127.0.0.1`).
+
+![Het eigen paneel in de zijbalk van LibreOffice Writer](docs/zijpaneel-libreoffice-eigen.png)
+
+Beide zijn getest in een echte LibreOffice 24.2 op een virtueel scherm (GTK; het eigen paneel ook X11): registreren, beoordelen, tonen, herstellen (kop, alternatieve tekst, kopregel), versie vastleggen; het webpaneel ook over https.
 
 **Het paneel in de browser.** **Office Assistent → Assistent in de browser openen** start een kleine webserver op `127.0.0.1` en opent het paneel in de browser, met poort en sleutel na het `#` in het adres. De brug antwoordt alleen met die sleutel, alleen aan het adres van de eigen integratielaag, en alleen over dat ene document; elke bewerking loopt via de hoofdthread van LibreOffice.
 

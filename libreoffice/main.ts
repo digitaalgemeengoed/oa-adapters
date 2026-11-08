@@ -23,13 +23,15 @@ interface Brug {
   soort: "brug" | "aanmelden";
   poort: number;
   sleutel: string;
+  /** In de webweergave in de zijbalk van Writer: zonder kopbalk, over de volle breedte. */
+  ingebed?: boolean;
 }
 
 function leesBrug(): Brug | null {
   const h = new URLSearchParams(location.hash.slice(1));
   const soort = h.get("aanmelden") ? "aanmelden" : h.get("brug") ? "brug" : null;
   if (soort && h.get("sleutel")) {
-    const b: Brug = { soort, poort: Number(h.get(soort)), sleutel: h.get("sleutel")! };
+    const b: Brug = { soort, poort: Number(h.get(soort)), sleutel: h.get("sleutel")!, ingebed: h.get("ingebed") === "1" };
     try {
       sessionStorage.setItem(OPSLAG, JSON.stringify(b));
     } catch {
@@ -49,6 +51,7 @@ function leesBrug(): Brug | null {
 
 async function start() {
   const brug = leesBrug();
+  if (brug?.ingebed) document.body.classList.add("ingebed");
   if (!brug || !Number.isInteger(brug.poort)) {
     document.getElementById("uitleg")!.hidden = false;
     return;
