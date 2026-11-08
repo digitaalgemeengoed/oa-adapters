@@ -10,8 +10,10 @@
 |---|---|---|---|
 | Demo-tekstverwerker | `DemoEditorAdapter` (rijk of beperkt) | alle, of alleen de drie basisvermogens | `/werkomgeving` |
 | Microsoft Word, ook Word voor het web | `StructuurAdapter` + `WordTekstverwerker` (Office.js, WordApi 1.3) | basis, segment-vervangen, plek-tonen, afdruk-schrijven | `/word/taskpane.html`, manifest op `/word/manifest.xml` |
-| LibreOffice Writer op de eigen computer | zijpaneel in Writer (Python, zelfde regels als `semantisch.ts` en `oa-kern`); of het paneel in de browser via `StructuurAdapter` + `LibreOfficeTekstverwerker` | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren | zijbalk **Assistent**; `/libreoffice` |
-| Collabora Online | `CollaboraAdapter` (postMessage en WOPI) | basis, afdruk-schrijven | `/collabora` |
+| Microsoft Excel, ook Excel voor het web | `ExcelAdapter` (Office.js, ExcelApi 1.9) | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren | zelfde takenvenster en manifest |
+| Microsoft PowerPoint, ook PowerPoint voor het web | `PowerPointAdapter` (Office.js, PowerPointApi 1.4; titels 1.8, alternatieve tekst 1.10) | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren | zelfde takenvenster en manifest |
+| LibreOffice Writer, Calc en Impress op de eigen computer | zijpaneel in Writer (Python, zelfde regels als `semantisch.ts` en `oa-kern`); of het paneel in de browser via `StructuurAdapter` + `LibreOfficeTekstverwerker` | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren | zijbalk **Assistent**; `/libreoffice` |
+| Collabora Online | `CollaboraAdapter` (postMessage en WOPI) | basis, afdruk-schrijven; voor ods en odp ook segment-vervangen | `/collabora` |
 
 Collabora laat zien hoe de assistent terugvalt: deelvervangen kan daar niet, dus vervangt hij het hele document en laadt het opnieuw.
 
@@ -31,6 +33,8 @@ Zo blijft de opmaak van het document staan. Voor elke opdracht controleert de ad
 ### Word
 
 Een invoegtoepassing met een takenvenster. In Word voor het web staat dat venster in een iframe van office.com; daar komt het cookie van de integratielaag niet aan. Het inloggen gebeurt daarom in een apart venster van Office (`/word/aanmelden.html`), dat na het inloggen een sessiesleutel aan het takenvenster geeft; die gaat als `Authorization`-kop mee, alleen in het geheugen.
+
+Hetzelfde manifest en takenvenster werken in **Excel** en **PowerPoint**; het takenvenster kiest de adapter bij het programma (`src/office/`). Een rekenblad en een presentatie gaan als secties naar de assistent, net als in LibreOffice en Collabora: per blad de naam als kop, het gebruikte bereik als tabel en afbeeldingen; per dia de titel als kop, tekstvakken en afbeeldingen. Herstellen: een blad hernoemen, een titel wijzigen of (als een dia er geen heeft) een tekstvak "Titel" toevoegen, alternatieve tekst. De afdruk staat in de instellingen van de invoegtoepassing, die Office in het bestand bewaart. Wat Office.js niet kan, zegt het paneel: de alternatieve tekst van een grafiek in Excel, en in oudere PowerPoint-versies de alternatieve tekst van afbeeldingen.
 
 ### LibreOffice
 
@@ -66,7 +70,9 @@ npm run dev       # ontwikkelserver; /api gaat naar de integratielaag op poort 3
 
 De extensie is getest tegen een echte LibreOffice (headless): start `soffice --headless --accept="socket,host=127.0.0.1,port=2002;urp;"` en draai `python3 -m pytest libreoffice-extensie/test` (de kruistest heeft ook node nodig).
 
-**Nog niet getest:** de Word-invoegtoepassing in een echte Word (Office.js is hier niet te draaien) en Collabora Online zelf (de pagina en de WOPI-host wel, tegen een nagebootste Collabora die met LibreOffice omzet).
+`test/office.test.ts` toetst de Excel- en PowerPoint-adapter tegen een nagebootst Office.js en de echte regels van oa-services.
+
+**Nog niet getest:** de invoegtoepassing in een echte Word, Excel of PowerPoint (Office.js is hier niet te draaien) en Collabora Online zelf (de pagina en de WOPI-host wel, tegen een nagebootste Collabora die met LibreOffice omzet).
 
 ## Een adapter toevoegen
 

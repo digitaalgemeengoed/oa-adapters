@@ -1,5 +1,11 @@
 # Wijzigingen
 
+## 0.8.0 — 2026-11-08
+
+- **Excel en PowerPoint**: de invoegtoepassing werkt ook in Excel en PowerPoint (één manifest, één takenvenster; de integratielaag 0.6.0 levert het manifest). `ExcelAdapter` en `PowerPointAdapter` (`src/office/`) leveren bladen en dia's als secties, zoals LibreOffice en Collabora, en herstellen op een plek: blad hernoemen, titel van een dia (zonder titel: een tekstvak "Titel"), alternatieve tekst. Origineel als xlsx of pptx; de afdruk in de instellingen van de invoegtoepassing.
+- Het takenvenster controleert de versie per programma (WordApi 1.3, ExcelApi 1.9, PowerPointApi 1.4).
+- Getest tegen een nagebootst Office.js (`test/office.test.ts`), niet in een echte Excel of PowerPoint.
+
 ## 0.7.0 — 2026-11-08
 
 - **Collabora**: nieuwe voorbeelden als tekst, rekenblad of presentatie. Voor ods en odp herstelt de adapter op een plek via de integratielaag (`/segment`) en laadt Collabora daarna opnieuw.
