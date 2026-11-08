@@ -10,14 +10,19 @@
       <header class="co-kop">
         <span class="co-app">Collabora Online</span>
         <select id="bestanden" aria-label="Werkbestand"></select>
-        <button type="button" id="nieuw">Nieuw voorbeelddocument</button>
+        <span class="co-nieuw" role="group" aria-label="Nieuw voorbeeld">
+          Nieuw voorbeeld:
+          <button type="button" data-soort="tekst">Tekst</button>
+          <button type="button" data-soort="rekenblad">Rekenblad</button>
+          <button type="button" data-soort="presentatie">Presentatie</button>
+        </span>
         <a href="/">Startpagina</a>
       </header>
       <p id="status" class="co-status" role="status"></p>
       <main class="co-werkvlak">
         <div class="co-editor">
           <iframe id="editor" name="collabora" title="Collabora Online" allow="clipboard-read *; clipboard-write *; fullscreen"></iframe>
-          <p id="leeg" class="co-leeg">Kies een werkbestand, of maak een nieuw voorbeelddocument.</p>
+          <p id="leeg" class="co-leeg">Kies een werkbestand, of maak een nieuw voorbeeld: tekst, rekenblad of presentatie.</p>
         </div>
         <aside id="paneel" class="co-paneel" aria-label="Assistent"></aside>
       </main>

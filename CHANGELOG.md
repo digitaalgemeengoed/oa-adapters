@@ -2,6 +2,8 @@
 
 ## 0.7.0 — 2026-11-08
 
+- **Collabora**: nieuwe voorbeelden als tekst, rekenblad of presentatie. Voor ods en odp herstelt de adapter op een plek via de integratielaag (`/segment`) en laadt Collabora daarna opnieuw.
+
 - **LibreOffice Calc en Impress**: het zijpaneel staat ook in Calc en Impress. `oa_bladen.py` levert een rekenblad als bladen en een presentatie als dia's (secties met de naam of titel als kop) en herstelt op een plek: blad hernoemen, titel van een dia (ook als de dia geen titelvak heeft), alternatieve tekst. Het origineel is .ods of .odp.
 - `LibreOfficeBladenAdapter` voor het webpaneel; de brug kent `/html`, `/segment` en `/plek`.
 - Het eigen paneel (optie 2) werkt nog alleen in Writer en zegt dat in Calc en Impress.

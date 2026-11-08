@@ -1,6 +1,6 @@
 import { plaatsPaneel } from "@digitaalgemeengoed/oa-paneel";
 import "@digitaalgemeengoed/oa-paneel/style.css";
-import { CollaboraAdapter, type CollaboraVenster } from "../src/collabora/adapter";
+import { CollaboraAdapter, type CollaboraVenster, type Formaat } from "../src/collabora/adapter";
 import { statusbalk, zorgVoorInlog } from "../src/host/statusbalk";
 import "./collabora.css";
 
@@ -99,16 +99,19 @@ const venster: CollaboraVenster = {
   },
 };
 
+const formaten = new Map<string, Formaat>();
+
 async function open(id: string) {
   huidig = id;
   keuze.value = id;
   weghalen?.();
   await openInEditor(id);
-  weghalen = plaatsPaneel(paneelplek, new CollaboraAdapter(id, venster, meld));
+  weghalen = plaatsPaneel(paneelplek, new CollaboraAdapter(id, venster, meld, formaten.get(id) ?? "docx"));
 }
 
 async function vulLijst(kies?: string) {
-  const lijst = await api<{ id: string; naam: string; gewijzigd: string }[]>("/api/collabora/bestanden");
+  const lijst = await api<{ id: string; naam: string; gewijzigd: string; formaat?: Formaat }[]>("/api/collabora/bestanden");
+  for (const w of lijst) formaten.set(w.id, w.formaat ?? "docx");
   keuze.innerHTML = "";
   const leegOptie = new Option(lijst.length ? "Kies een werkbestand…" : "Nog geen werkbestanden", "");
   keuze.add(leegOptie);
@@ -126,16 +129,22 @@ async function start() {
     return;
   }
   keuze.addEventListener("change", () => keuze.value && open(keuze.value).catch((e) => meld({ soort: "fout", tekst: (e as Error).message })));
-  document.getElementById("nieuw")!.addEventListener("click", async () => {
-    try {
-      meld({ soort: "info", tekst: "Nieuw voorbeelddocument maken…" });
-      const { id } = await api<{ id: string }>("/api/collabora/bestanden", { method: "POST" });
-      await vulLijst(id);
-      await open(id);
-    } catch (e) {
-      meld({ soort: "fout", tekst: (e as Error).message });
-    }
-  });
+  for (const knop of document.querySelectorAll<HTMLButtonElement>(".co-nieuw button")) {
+    knop.addEventListener("click", async () => {
+      try {
+        meld({ soort: "info", tekst: "Nieuw voorbeeld maken…" });
+        const { id } = await api<{ id: string }>("/api/collabora/bestanden", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ soort: knop.dataset.soort }),
+        });
+        await vulLijst(id);
+        await open(id);
+      } catch (e) {
+        meld({ soort: "fout", tekst: (e as Error).message });
+      }
+    });
+  }
 }
 
 start();

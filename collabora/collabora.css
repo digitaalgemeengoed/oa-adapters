@@ -18,3 +18,4 @@ body { font-family: system-ui, sans-serif; font-size: 14px; color: #1b1b1b; back
   .co-werkvlak { grid-template-columns: 1fr; grid-template-rows: 60vh auto; }
   .co-paneel { border-left: 0; border-top: 1px solid #ddd; }
 }
+.co-nieuw { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
