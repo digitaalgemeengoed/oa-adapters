@@ -9,3 +9,4 @@ public/werkomgeving/
 bron/
 __pycache__/
 *.pyc
+.pytest_cache/

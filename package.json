@@ -1,6 +1,6 @@
 {
   "name": "@digitaalgemeengoed/oa-adapters",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Adapters per werkomgeving voor de Office Assistent: demo-tekstverwerker, Microsoft Word, Collabora Online en LibreOffice.",
   "license": "EUPL-1.2",
   "type": "module",

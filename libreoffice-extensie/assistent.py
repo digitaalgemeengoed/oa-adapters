@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Office Assistent voor LibreOffice Writer: menu en lokale brug.
+"""Office Assistent voor LibreOffice Writer: zijpaneel, menu en lokale brug.
 
-"Office Assistent → Assistent openen bij dit document" start een kleine
+Het zijpaneel "Assistent" (oa_zijpaneel.py) staat als eigen tabblad in de
+zijbalk; PaneelFabriek hieronder maakt het voor elk venster.
+
+"Office Assistent → Assistent in de browser openen" start een kleine
 webserver op 127.0.0.1 (alleen deze computer) en opent het paneel in de
 browser. Het paneel praat met de integratielaag zoals altijd, en met het
 document via deze brug. De brug:
@@ -27,10 +30,13 @@ import uno
 import unohelper
 from com.sun.star.awt import XCallback
 from com.sun.star.task import XJobExecutor
+from com.sun.star.ui import XUIElementFactory
 
 import oa_document as od
 
 IMPLEMENTATIE = "nl.digitaalgemeengoed.oa.Assistent"
+FABRIEK = "nl.digitaalgemeengoed.oa.PaneelFabriek"
+DECK = "OfficeAssistentDeck"
 EXTENSIE = "nl.digitaalgemeengoed.office-assistent"
 
 
@@ -182,7 +188,7 @@ class Brug:
             raise _Weg()
         h = self.hoofd.voer_uit
         if methode == "GET" and pad == "/status":
-            return {"naam": h(lambda: od.naam_van(doc)), "versie": "0.3.0"}
+            return {"naam": h(lambda: od.naam_van(doc)), "versie": "0.5.0"}
         if methode == "GET" and pad == "/blokken":
             return h(lambda: od.lees_blokken(doc))
         if methode == "GET" and pad == "/bestand":
@@ -252,6 +258,9 @@ class Assistent(unohelper.Base, XJobExecutor):
 
     def trigger(self, opdracht):
         try:
+            if opdracht == "tonen":
+                self._toon_zijpaneel()
+                return
             if opdracht == "stoppen":
                 stop_assistent()
                 self._bericht("De verbinding met de assistent is verbroken.")
@@ -268,6 +277,15 @@ class Assistent(unohelper.Base, XJobExecutor):
             traceback.print_exc()
             self._bericht("De assistent kon niet starten: %s" % e)
 
+    def _toon_zijpaneel(self):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", self.ctx)
+        controller = desktop.getCurrentFrame().getController()
+        zijbalk = controller.getSidebar()
+        zijbalk.setVisible(True)
+        decks = zijbalk.getDecks()
+        if decks.hasByName(DECK):
+            decks.getByName(DECK).activate(True)
+
     def _bericht(self, tekst):
         try:
             desktop = self.ctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", self.ctx)
@@ -279,5 +297,28 @@ class Assistent(unohelper.Base, XJobExecutor):
             pass
 
 
+class PaneelFabriek(unohelper.Base, XUIElementFactory):
+    """Maakt het zijpaneel voor een venster (Factories.xcu, Sidebar.xcu)."""
+
+    def __init__(self, ctx):
+        self.ctx = ctx
+
+    def createUIElement(self, url, argumenten):
+        import oa_zijpaneel
+
+        arg = {a.Name: a.Value for a in argumenten}
+        oa_zijpaneel.log("createUIElement", url, sorted(arg))
+        ouder = arg.get("ParentWindow")
+        frame = arg.get("Frame")
+        if ouder is None or frame is None:
+            raise RuntimeError("Het zijpaneel heeft een venster nodig.")
+        try:
+            return oa_zijpaneel.Paneel(self.ctx, frame, ouder, arg.get("Sidebar"), url, _instellingen(self.ctx)["basis"])
+        except Exception:
+            traceback.print_exc()
+            raise
+
+
 g_ImplementationHelper = unohelper.ImplementationHelper()
 g_ImplementationHelper.addImplementation(Assistent, IMPLEMENTATIE, ("com.sun.star.task.Job",))
+g_ImplementationHelper.addImplementation(PaneelFabriek, FABRIEK, ("com.sun.star.ui.UIElementFactory",))

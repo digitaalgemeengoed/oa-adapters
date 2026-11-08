@@ -10,15 +10,21 @@
         <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
         <prop oor:name="ImageIdentifier" oor:type="xs:string"><value/></prop>
         <node oor:name="Submenu">
+          <node oor:name="m0" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?tonen</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Assistent tonen</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument</value></prop>
+          </node>
           <node oor:name="m1" oor:op="replace">
             <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?openen</value></prop>
-            <prop oor:name="Title" oor:type="xs:string"><value>Assistent openen bij dit document</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Assistent in de browser openen</value></prop>
             <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
             <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument</value></prop>
           </node>
           <node oor:name="m2" oor:op="replace">
             <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?stoppen</value></prop>
-            <prop oor:name="Title" oor:type="xs:string"><value>Verbinding met de assistent verbreken</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Verbinding met de browser verbreken</value></prop>
             <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
             <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument</value></prop>
           </node>

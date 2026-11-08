@@ -7,7 +7,7 @@ import { zipSync } from "fflate";
 
 const bron = new URL("../libreoffice-extensie/", import.meta.url).pathname;
 const doel = new URL("../dist/web/libreoffice/", import.meta.url).pathname;
-const overslaan = new Set(["test", "__pycache__", "README.md"]);
+const overslaan = new Set(["test", "__pycache__", ".pytest_cache", "README.md"]);
 
 const bestanden = {};
 function voegToe(map) {
