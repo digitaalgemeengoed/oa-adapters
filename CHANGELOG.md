@@ -1,5 +1,11 @@
 # Wijzigingen
 
+## 0.14.1 — 2026-11-09
+
+- Bij het openen van het paneel (LibreOffice, Collabora, aanmeldvenster van Office): is de server niet bereikbaar of geeft hij een fout, dan een melding met *Opnieuw proberen* in plaats van een leeg paneel.
+- Geen eindeloze inloglus meer als de omgeving het inlogcookie niet bewaart: na één poging een melding met uitleg.
+- Word, Excel en PowerPoint: sessie verlopen → *Opnieuw inloggen* in het paneel opent het aanmeldvenster; daarna komt het paneel terug.
+
 ## 0.14.0 — 2026-11-09
 
 **Het webpaneel in de zijbalk van LibreOffice op Windows en macOS** (extensie 0.12.0, proef).

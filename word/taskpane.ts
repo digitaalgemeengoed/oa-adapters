@@ -29,11 +29,14 @@ function maakAdapter() {
 
 let geplaatst = false;
 let gewenst: Opdracht | undefined;
+let weghalen: (() => void) | null = null;
 
 function start(sessie: string) {
   aanmelden.hidden = true;
+  // Na opnieuw inloggen (sessie verlopen): het oude paneel eerst weg, dan een nieuw met de nieuwe sessie.
+  weghalen?.();
   const adapter = maakAdapter();
-  plaatsPaneel(document.getElementById("paneel")!, adapter, { sessie, module: gewenst });
+  weghalen = plaatsPaneel(document.getElementById("paneel")!, adapter, { sessie, module: gewenst, opnieuwInloggen: inloggen });
   geplaatst = true;
 }
 
@@ -64,12 +67,18 @@ function koppelKnoppen() {
   }
 }
 
+/** Een fout bij het (opnieuw) inloggen, ook als het paneel er al staat: dan komt het aanmeldvak er weer bij. */
+function toonFout(tekst: string) {
+  fout.textContent = tekst;
+  fout.hidden = false;
+  aanmelden.hidden = false;
+}
+
 function inloggen() {
   fout.hidden = true;
   Office.context.ui.displayDialogAsync(`${location.origin}/word/aanmelden.html`, { height: 70, width: 35, promptBeforeOpen: false }, (r) => {
     if (r.status !== Office.AsyncResultStatus.Succeeded) {
-      fout.textContent = `Het aanmeldvenster ging niet open (${r.error.message}). Sta pop-ups toe voor deze site en probeer opnieuw.`;
-      fout.hidden = false;
+      toonFout(`Het aanmeldvenster ging niet open (${r.error.message}). Sta pop-ups toe voor deze site en probeer opnieuw.`);
       return;
     }
     const venster = r.value;
@@ -79,13 +88,11 @@ function inloggen() {
         const { sessie } = JSON.parse((arg as { message: string }).message) as { sessie: string };
         start(sessie);
       } catch {
-        fout.textContent = "Inloggen is niet gelukt. Probeer opnieuw.";
-        fout.hidden = false;
+        toonFout("Inloggen is niet gelukt. Probeer opnieuw.");
       }
     });
     venster.addEventHandler(Office.EventType.DialogEventReceived, () => {
-      fout.textContent = "Het aanmeldvenster is gesloten voordat je was ingelogd.";
-      fout.hidden = false;
+      toonFout("Het aanmeldvenster is gesloten voordat je was ingelogd.");
     });
   });
 }
