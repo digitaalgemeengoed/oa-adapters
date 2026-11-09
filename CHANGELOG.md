@@ -1,5 +1,9 @@
 # Wijzigingen
 
+## 0.15.3 — 2026-11-09 (LibreOffice-extensie 0.13.3)
+
+LibreOffice: het webpaneel in de zijbalk was niet helemaal naar beneden te scrollen als er onderin een werkbalk bijkwam (bijvoorbeeld de zoekbalk, Ctrl+F) nadat het paneel er stond. De zijbalk gaf het paneel dan geen nieuwe maat; de webweergave hield haar oude hoogte en de onderkant (zoals de knop *Metadata vastleggen*) viel weg achter de werkbalk. Nu volgt het paneel de maat van het documentvenster en tekent het opnieuw. Nagebootst en getest in Writer (GTK).
+
 ## 0.15.2 — 2026-11-09 (LibreOffice-extensie 0.13.2)
 
 **Grondslag aanpassen.** Het paneel (0.8.4) laat de grondslag in gewone taal zien, met uitleg, en je kunt hem wijzigen zolang het een voorvertoning is. De plaatshouder krijgt dan de kleur van het nieuwe niveau (`herkleurPii`):

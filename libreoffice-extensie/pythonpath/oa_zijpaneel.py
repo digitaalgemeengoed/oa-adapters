@@ -256,6 +256,34 @@ class _Formaat(unohelper.Base, XWindowListener):
     def windowResized(self, ev):
         self.paneel.bij_formaat()
 
+
+class _DocumentFormaat(unohelper.Base, XWindowListener):
+    """
+    Het documentvenster verandert van maat, bijvoorbeeld als er onderin een
+    werkbalk bijkomt (zoeken met Ctrl+F) of verdwijnt. De zijbalk geeft het
+    paneel dan uit zichzelf geen nieuwe maat: de webweergave hield haar oude
+    hoogte en de onderkant viel weg achter de werkbalk. Vraag daarom om een
+    nieuwe opmaak; dan volgt bij_formaat.
+    """
+
+    def __init__(self, paneel):
+        self.paneel = paneel
+
+    def windowResized(self, ev):
+        self.paneel.bij_documentformaat()
+
+    def windowMoved(self, ev):
+        pass
+
+    def windowShown(self, ev):
+        pass
+
+    def windowHidden(self, ev):
+        pass
+
+    def disposing(self, ev):
+        pass
+
     def windowMoved(self, ev):
         pass
 
@@ -303,6 +331,13 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
         self.vlak.setPosSize(0, 0, self.breedte, self.hoogte, 12)  # alleen de maat: de positie is van de zijbalk (schuiven)
         self.vlak.setVisible(True)
         ouder.addWindowListener(_Formaat(self))
+        self._documentvenster = None
+        self._documentluisteraar = _DocumentFormaat(self)
+        try:
+            self._documentvenster = frame.getComponentWindow()
+            self._documentvenster.addWindowListener(self._documentluisteraar)
+        except Exception as e:
+            log("documentvenster niet te volgen:", e)
 
         self._meet()
         self.model, self._nieuw_model = model_voor(ctx, self.document, self.basis, self.hoofd)
@@ -426,6 +461,11 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
 
     def dispose(self):
         self.weg = True
+        if self._documentvenster is not None:
+            try:
+                self._documentvenster.removeWindowListener(self._documentluisteraar)
+            except Exception:
+                pass
         with _slot:
             if _panelen.get(self.document.RuntimeUID) is self:
                 _panelen.pop(self.document.RuntimeUID, None)
@@ -485,10 +525,16 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
         if self.web is not None:
             p = self.ouder.getPosSize()
             self.web.maat(p.Width, p.Height)
+            # Kleiner geworden: de webweergave tekent anders niet opnieuw en de onderkant blijft weg.
+            self._ververs_straks(150)
             return
         if self.modus != "eigen":
             return
         self._nieuwe_breedte(self.ouder.getPosSize().Width)
+
+    def bij_documentformaat(self):
+        if self.web is not None and not self.weg:
+            self.hoofd.later(self._vraag_opmaak)
 
     def _nieuwe_breedte(self, b):
         """
