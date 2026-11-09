@@ -43,3 +43,31 @@ test("demo-tekstverwerker: vervangt in de tekst en leest de selectie", async () 
   assert.equal(await a.leesSelectie!(), "Jan de Vries");
   assert.equal(new DemoEditorAdapter(editor, opslag, () => undefined, "beperkt").vervangTekst, undefined);
 });
+
+test("demo-tekstverwerker: plaatshouders markeren, per plek terugzetten, definitief maken", async () => {
+  (globalThis as unknown as { CSS: { escape: (s: string) => string } }).CSS ??= { escape: (s: string) => s };
+  const doc = new DOMParser().parseFromString("<html><body><div id=e><p>Jan de Vries belde Jan. <b>Jan</b> en Janssen.</p></div></body></html>", "text/html");
+  const editor = doc.getElementById("e") as unknown as HTMLElement;
+  const opslag = { leesEigenschap: () => null, schrijfEigenschap: () => undefined };
+  const a = new DemoEditorAdapter(editor, opslag, () => undefined);
+  const plekken = await a.markeerPii!([
+    { van: "Jan", plaatshouder: "[PERSOON 2]", ppl: 1, voorvertoning: true },
+    { van: "Jan de Vries", plaatshouder: "[PERSOON 1]", ppl: 1, voorvertoning: true },
+  ]);
+  assert.deepEqual(plekken.map((p) => [p.plek, p.plaatshouder]), [["p1", "[PERSOON 1]"], ["p2", "[PERSOON 2]"], ["p3", "[PERSOON 2]"]]);
+  assert.equal(editor.textContent, "[PERSOON 1] belde [PERSOON 2]. [PERSOON 2] en Janssen.");
+  assert.equal(editor.querySelectorAll(".oa-plh.l1.pv").length, 3);
+  await a.herstelPii!([{ plek: "p3", waarde: "Jan" }]);
+  assert.equal(editor.textContent, "[PERSOON 1] belde [PERSOON 2]. Jan en Janssen.");
+  assert.deepEqual((await a.leesPiiPlekken!()).map((p) => [p.plek, p.voorvertoning]), [["p1", true], ["p2", true]]);
+  await a.zetPiiDefinitief!();
+  assert.deepEqual((await a.leesPiiPlekken!()).map((p) => p.voorvertoning), [false, false]);
+  // Een tweede ronde: bestaande plaatshouders blijven, nummering van plekken loopt door.
+  const meer = await a.markeerPii!([{ van: "Janssen", plaatshouder: "[PERSOON 3]", ppl: 1, voorvertoning: true }]);
+  assert.deepEqual(meer.map((p) => p.plek), ["p3"]);
+  let geklikt = "";
+  const stop = a.bijPiiKlik!((p) => (geklikt = p.plek));
+  editor.querySelector("[data-oa-pii='p2']")!.dispatchEvent(new DomEvent("click", { bubbles: true }) as unknown as Event);
+  assert.equal(geklikt, "p2");
+  stop();
+});

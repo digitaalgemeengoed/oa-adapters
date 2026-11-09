@@ -35,3 +35,14 @@ body { font-family: system-ui, sans-serif; background: #e9e9e6; color: #1d1d1b; 
   .titelbalk .soort, .titelbalk select { max-width: 100%; }
   .werkbalk { padding: 6px 8px; }
 }
+
+/* Plaatshouders van het anonimiseren, zoals in de MIRA-demo: kleur per niveau, gestippeld zolang het een voorvertoning is. */
+#document .oa-plh { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 0.82em; padding: 1px 5px; border-radius: 4px; border: 1px solid transparent; white-space: nowrap; cursor: pointer; font-weight: 500; }
+#document .oa-plh.l1 { background: #e3f1e6; color: #1e6b33; }
+#document .oa-plh.l2 { background: #fdf0d8; color: #8a5300; }
+#document .oa-plh.l3 { background: #fbe3e3; color: #a4001d; }
+#document .oa-plh.pv { border: 1px dashed currentColor; }
+#document .oa-plh.on, #document .oa-plh:focus-visible { outline: 2px solid #1a5ea8; outline-offset: 1px; }
+.oa-contextmenu { position: fixed; z-index: 50; background: #fff; border: 1px solid #c4c4c4; border-radius: 6px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18); padding: 4px; }
+.oa-contextmenu button { font: inherit; font-size: 0.875rem; background: none; border: 0; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+.oa-contextmenu button:hover, .oa-contextmenu button:focus-visible { background: #e8f0fb; }

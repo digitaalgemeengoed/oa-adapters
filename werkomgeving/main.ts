@@ -1,4 +1,5 @@
 import { plaatsPaneel } from "@digitaalgemeengoed/oa-paneel";
+import { stuurOpdracht } from "@digitaalgemeengoed/oa-paneel";
 import { plaatsAssistentKnoppen } from "../src/host/assistentknoppen";
 import "@digitaalgemeengoed/oa-paneel/style.css";
 import type { Melding } from "@digitaalgemeengoed/oa-contract";
@@ -76,10 +77,39 @@ start();
 const werkvlak = document.querySelector<HTMLElement>(".werkvlak")!;
 const balk = document.querySelector<HTMLElement>(".werkbalk")!;
 balk.append(Object.assign(document.createElement("span"), { className: "scheiding" }));
-plaatsAssistentKnoppen(balk, {
-  toon: () => werkvlak.classList.remove("zonder-paneel"),
-  wissel: () => werkvlak.classList.toggle("zonder-paneel"),
+plaatsAssistentKnoppen(
+  balk,
+  {
+    toon: () => werkvlak.classList.remove("zonder-paneel"),
+    wissel: () => werkvlak.classList.toggle("zonder-paneel"),
+  },
+  true,
+);
+
+// Rechtermuisknop op een selectie: "Anonimiseer selectie", zoals in een echte tekstverwerker.
+const menu = Object.assign(document.createElement("div"), { className: "oa-contextmenu", hidden: true });
+menu.setAttribute("role", "menu");
+const menuKnop = Object.assign(document.createElement("button"), { type: "button", textContent: "Anonimiseer selectie (Assistent)" });
+menuKnop.setAttribute("role", "menuitem");
+menu.append(menuKnop);
+document.body.append(menu);
+const sluitMenu = () => (menu.hidden = true);
+editor.addEventListener("contextmenu", (e) => {
+  const sel = document.getSelection();
+  if (!sel || sel.isCollapsed || soortKeuze.value !== "rijk") return;
+  e.preventDefault();
+  menu.style.left = `${e.clientX}px`;
+  menu.style.top = `${e.clientY}px`;
+  menu.hidden = false;
+  menuKnop.focus();
 });
+menuKnop.addEventListener("click", () => {
+  sluitMenu();
+  werkvlak.classList.remove("zonder-paneel");
+  stuurOpdracht("anon-selectie");
+});
+document.addEventListener("click", (e) => !menu.contains(e.target as Node) && sluitMenu());
+document.addEventListener("keydown", (e) => e.key === "Escape" && sluitMenu());
 
 // --- Werkbalk --------------------------------------------------------------
 

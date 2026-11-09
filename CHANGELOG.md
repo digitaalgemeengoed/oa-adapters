@@ -1,5 +1,10 @@
 # Wijzigingen
 
+## 0.11.0 — 2026-11-09
+
+- Demo-werkomgeving: plaatshouders als gemarkeerde elementen in het document (kleur per niveau, gestippeld bij voorvertoning), klik naar het paneel, per plek terugzetten, eigenschap Versie. Rechtermuisknop op een selectie: "Anonimiseer selectie".
+- Werkbalk: knop Anonimiseer selectie (waar de werkomgeving de selectie kan doorgeven).
+
 ## 0.10.0 — 2026-11-09
 
 Anonimiseren bij de bron: de vermogens `tekst-vervangen` en `selectie-lezen`, in alle werkomgevingen. Vervangen gaat altijd als heel woord ("Jan" niet in "Janssen"), hoofdlettergevoelig, de langste waarde eerst.
