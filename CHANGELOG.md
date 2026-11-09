@@ -1,5 +1,18 @@
 # Wijzigingen
 
+## 0.14.0 — 2026-11-09
+
+**Het webpaneel in de zijbalk van LibreOffice op Windows en macOS** (extensie 0.12.0, proef).
+
+- Windows: WebView2 (de motor van Edge, standaard in Windows 10 en 11), via `WebView2Loader.dll` (Microsoft, BSD-licentie, in de extensie voor x64, arm64 en x86) en COM met ctypes: geen extra pakketten nodig (`oa_webview_win.py`).
+- macOS: WKWebView (de motor van Safari), via de runtime van Objective-C met ctypes (`oa_webview_mac.py`).
+- Beide in een systeemvenster ("systemchildwindow") dat LibreOffice met het paneel meeschuift (`oa_webview_eigen.py`), met hetzelfde berichtkanaal als op Linux: aan de kant van het paneel verandert niets.
+- Lukt het niet, dan valt het paneel terug op het eigen paneel, met de reden en de verwijzing naar het paneel in de browser.
+- Logboek voor testers: Office Assistent → Logboek openen (`oa_logboek.py`; hoogstens 512 kB, zonder documentinhoud of sleutels).
+- Geen GLib meer nodig buiten de Linux-webweergave zelf.
+
+Niet getest op een echte Windows of Mac (dat kan hier niet): de COM-tabellen en het berichtkanaal zijn hier getoetst, de webweergaven zelf nog niet. Zie TESTEN.md in oa-uitrol.
+
 ## 0.13.0 — 2026-11-09
 
 **Anonimiseren in het document in alle werkomgevingen.**

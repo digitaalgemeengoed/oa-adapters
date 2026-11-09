@@ -9,8 +9,11 @@ in de zijbalk; deze module hangt er een in:
   Fedora): een WebKitGTK-webweergave, in hetzelfde proces, in het vlak dat
   LibreOffice voor het paneel maakt. GTK draait daar al; de webweergave
   wordt een gewoon onderdeel van het venster.
-- Elders (Windows, macOS, of LibreOffice zonder GTK): nog niet. Het
-  zijpaneel valt dan terug op het eigen paneel (oa_zijpaneel.py).
+- Windows: WebView2 (oa_webview_win.py); macOS: WKWebView (oa_webview_mac.py),
+  elk in een systeemvenster in het paneel (oa_webview_eigen.py).
+- Lukt het niet (LibreOffice zonder GTK, geen WebView2 …), dan valt het
+  zijpaneel terug op het eigen paneel (oa_zijpaneel.py), met de knop om het
+  paneel in de browser te openen. De reden staat in het logboek.
 
 Het webpaneel praat met de integratielaag zoals altijd (inloggen met het
 cookie in de webweergave) en met het document via de lokale brug
@@ -27,16 +30,23 @@ import sys
 import threading
 
 
+from oa_logboek import log as _log
+from oa_webview_eigen import NietBeschikbaar  # noqa: F401 (ook voor wie dit module gebruikt)
+
+
 def log(*a):
-    pad = os.environ.get("OA_LOG")
-    if pad:
-        import time
-        with open(pad, "a", encoding="utf-8") as f:
-            f.write(time.strftime("%H:%M:%S ") + "webview " + " ".join(str(x) for x in a) + "\n")
+    _log("webview", *a)
 
 
-class NietBeschikbaar(Exception):
-    """Hier kan geen webweergave in de zijbalk; de reden staat in de melding."""
+def maak(ouder, adres, opslag, extern_openen, brug=None, herkomst="", later=None):
+    """De webweergave voor dit systeem; NietBeschikbaar als het hier niet kan."""
+    if sys.platform.startswith("win"):
+        import oa_webview_win
+        return oa_webview_win.Webweergave(ouder, adres, opslag, extern_openen, brug, herkomst, later)
+    if sys.platform == "darwin":
+        import oa_webview_mac
+        return oa_webview_mac.Webweergave(ouder, adres, opslag, extern_openen, brug, herkomst, later)
+    return Webweergave(ouder, adres, opslag, extern_openen, brug, herkomst)
 
 
 def _gtk_weergave():

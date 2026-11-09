@@ -33,11 +33,9 @@ from oa_paneelmodel import SESSIES, Model
 from oa_verbinding import Aanmelder
 
 def log(*a):
-    """Alleen met OA_LOG=<bestand>: een logboek voor wie het paneel ontwikkelt."""
-    pad = os.environ.get("OA_LOG")
-    if pad:
-        with open(pad, "a", encoding="utf-8") as f:
-            f.write(time.strftime("%H:%M:%S ") + " ".join(str(x) for x in a) + "\n")
+    """Het logboek (Office Assistent → Logboek openen); zie oa_logboek.py."""
+    from oa_logboek import log as _log
+    _log("paneel", *a)
 
 
 MARGE = 12
@@ -328,16 +326,17 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
         import oa_webview
         from oa_brug import Brug
         try:
+            from oa_logboek import kop, map_
+            log("webpaneel starten;", kop())
             self.brug = Brug(self.ctx, self.document, self.basis)
             adres = self.brug.paneeladres() + "&ingebed=1"
-            opslag = os.path.join(os.path.expanduser("~"), ".local", "share", "office-assistent", "webweergave")
-            self.web = oa_webview.Webweergave(self.ouder, adres, opslag, self._extern_openen, self.brug, self.basis)
+            opslag = os.path.join(map_(), "webweergave")
+            self.web = oa_webview.maak(self.ouder, adres, opslag, self._extern_openen, self.brug, self.basis, self.hoofd.later)
             self.modus = "web"
             if self._wacht:
                 self.web.stuur(self._wacht)
             p = self.ouder.getPosSize()
-            from gi.repository import GLib
-            GLib.timeout_add(400, lambda: self.web is not None and self.web.ververs(p.Width, p.Height) and False)
+            self._na(400, lambda: self.web is not None and self.web.ververs(p.Width, p.Height))
             self._vraag_opmaak()
         except Exception as e:
             log("webpaneel lukt niet:", e)
@@ -352,7 +351,7 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
             if not self.model.melding:
                 reden = str(e).strip().rstrip(".")
                 reden = reden[:1].lower() + reden[1:]
-                self.model.melding = {"soort": "info", "tekst": "Het webpaneel kan hier niet: %s. Je ziet het eigen paneel van LibreOffice; dat doet hetzelfde." % reden}
+                self.model.melding = {"soort": "info", "tekst": "Het webpaneel kan hier niet: %s. Je ziet het eigen paneel van LibreOffice. Alles (ook anonimiseren in het document) kan via Assistent in de browser openen. Details: Office Assistent → Logboek openen." % reden}
                 self.teken()
 
     def _start_eigen(self):
@@ -468,11 +467,11 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
                 self.web.ververs(p.Width, p.Height)
             return False
 
-        def plan():
-            from gi.repository import GLib
-            GLib.timeout_add(ms, doe)
+        self._na(ms, doe)
 
-        self.hoofd.later(plan)
+    def _na(self, ms, functie):
+        """Over ms milliseconden op de hoofdthread (op elk systeem; geen GLib nodig)."""
+        threading.Timer(ms / 1000.0, lambda: self.hoofd.later(functie)).start()
 
     def bij_zichtbaar(self):
         if self.web is not None:

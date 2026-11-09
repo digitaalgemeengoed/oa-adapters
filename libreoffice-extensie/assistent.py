@@ -145,6 +145,13 @@ class Assistent(unohelper.Base, XJobExecutor):
                 self._bericht("Het zijpaneel gebruikt voortaan %s. Dat geldt voor documenten die je hierna opent (of herstart LibreOffice)." % (
                     "het webpaneel van de server" if opdracht == "paneel-web" else "het eigen paneel van LibreOffice"))
                 return
+            if opdracht == "logboek":
+                import oa_logboek
+                from oa_logboek import kop, log
+                log("logboek", "geopend;", kop())
+                shell = self.ctx.ServiceManager.createInstanceWithContext("com.sun.star.system.SystemShellExecute", self.ctx)
+                shell.execute(uno.systemPathToFileUrl(oa_logboek.pad()), "", 1)  # 1 = URIS_ONLY
+                return
             if opdracht == "stoppen":
                 stop_assistent()
                 self._bericht("De verbinding met de assistent is verbroken.")
