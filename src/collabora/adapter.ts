@@ -1,4 +1,5 @@
 import { BASISVERMOGENS, type Adapter, type Afdruk, type Inhoud, type Melding, type Plek, type Vermogen, type Werkomgeving } from "@digitaalgemeengoed/oa-contract";
+import { icuPatroon, icuVervanging, ordenParen, telInHtml, type Paar } from "../tekstvervangen.js";
 
 export type Formaat = "docx" | "ods" | "odp";
 
@@ -17,6 +18,8 @@ export interface CollaboraVenster {
   slaOp(): Promise<void>;
   /** Opent het werkbestand opnieuw in Collabora (na een wijziging buiten Collabora om). */
   herlaad(): Promise<void>;
+  /** Een UNO-opdracht in Collabora uitvoeren (postMessage Send_UNO_Command); geen antwoord. */
+  unoOpdracht?(opdracht: string, args: Record<string, { type: string; value: unknown }>): void;
 }
 
 const AFDRUK = "oa-afdruk";
@@ -29,11 +32,41 @@ export class CollaboraAdapter implements Adapter {
     private readonly formaat: Formaat = "docx",
   ) {
     if (formaat !== "docx") this.vervangSegment = (plek, html) => this.herstelOpPlek(plek, html);
+    if (venster.unoOpdracht) this.vervangTekst = (paren) => this.zoekEnVervang(paren);
+  }
+
+  readonly vervangTekst?: (paren: Paar[]) => Promise<number>;
+
+  /**
+   * Zoeken en vervangen van Collabora zelf (.uno:ExecuteSearch, "alles
+   * vervangen", reguliere expressie met woordgrens). postMessage geeft geen
+   * aantal terug; daarom tellen we voor en na in het opgeslagen bestand, en
+   * melden we wat is blijven staan.
+   */
+  private async zoekEnVervang(paren: Paar[]): Promise<number> {
+    const geordend = ordenParen(paren);
+    await this.venster.slaOp();
+    const voor = telInHtml((await this.vraag<{ html: string }>("/html")).html, geordend);
+    for (const p of geordend)
+      this.venster.unoOpdracht!(".uno:ExecuteSearch", {
+        "SearchItem.SearchString": { type: "string", value: icuPatroon(p.van) },
+        "SearchItem.ReplaceString": { type: "string", value: icuVervanging(p.naar) },
+        "SearchItem.Command": { type: "long", value: 3 }, // REPLACE_ALL
+        "SearchItem.AlgorithmType": { type: "short", value: 1 }, // REGEXP
+        "SearchItem.TransliterationFlags": { type: "long", value: 0 }, // hoofdlettergevoelig
+        "SearchItem.Backward": { type: "boolean", value: false },
+      });
+    // Collabora voert de opdrachten op volgorde uit; opslaan komt er dus na.
+    await this.venster.slaOp();
+    const na = telInHtml((await this.vraag<{ html: string }>("/html")).html, geordend);
+    if (na > 0) this.melden({ soort: "waarschuwing", tekst: `${na} keer is een persoonsgegeven in het document blijven staan. Vervang die met de hand door de plaatshouder.` });
+    return Math.max(0, voor - na);
   }
 
   werkomgeving(): Werkomgeving {
     const vermogens: Vermogen[] = [...BASISVERMOGENS, "afdruk-schrijven", "bestand-opleveren"];
     if (this.formaat !== "docx") vermogens.push("segment-vervangen");
+    if (this.vervangTekst) vermogens.push("tekst-vervangen");
     const naam = this.formaat === "ods" ? "Collabora Online (rekenblad)" : this.formaat === "odp" ? "Collabora Online (presentatie)" : "Collabora Online";
     return { id: "collabora-online", naam, vermogens };
   }

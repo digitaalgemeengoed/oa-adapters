@@ -1,5 +1,6 @@
 /// <reference types="office-js" />
 import { BASISVERMOGENS, type Adapter, type Afdruk, type Inhoud, type Melding, type Plek, type Vermogen, type Werkomgeving } from "@digitaalgemeengoed/oa-contract";
+import { schoonSelectie, vervangInTekst, type Paar } from "../tekstvervangen.js";
 import { eersteElement, esc, HANDMATIG, img, leesAfdrukUitBestand, leesOfficeBestand, NIET_GEVONDEN, padDelen, schrijfAfdrukInBestand } from "./gedeeld.js";
 
 const MAX_RIJEN = 200;
@@ -25,7 +26,7 @@ export class ExcelAdapter implements Adapter {
   constructor(private readonly melden: (m: Melding) => void) {}
 
   werkomgeving(): Werkomgeving {
-    const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven", "bestand-opleveren"];
+    const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven", "bestand-opleveren", "tekst-vervangen", "selectie-lezen"];
     return { id: "excel", naam: "Microsoft Excel", vermogens };
   }
 
@@ -120,6 +121,51 @@ export class ExcelAdapter implements Adapter {
       await ctx.sync();
     }).catch((e: Error) => this.melden({ soort: "fout", tekst: e.message }));
   };
+
+  /**
+   * In elke cel met vaste tekst (geen formule) de waarden als heel woord
+   * vervangen. Excel's eigen replaceAll kent geen "heel woord", vandaar
+   * per cel.
+   */
+  vervangTekst = async (paren: Paar[]): Promise<number> => {
+    const aantal = await Excel.run(async (ctx) => {
+      const bladen = ctx.workbook.worksheets;
+      bladen.load("items");
+      await ctx.sync();
+      const bereiken = bladen.items.map((b) => {
+        const r = b.getUsedRangeOrNullObject(true);
+        r.load("formulas,rowIndex,columnIndex");
+        return { b, r };
+      });
+      await ctx.sync();
+      let aantal = 0;
+      for (const { b, r } of bereiken) {
+        if (r.isNullObject) continue;
+        r.formulas.forEach((rij, i) =>
+          rij.forEach((cel, j) => {
+            if (typeof cel !== "string" || cel.startsWith("=")) return;
+            const v = vervangInTekst(cel, paren);
+            if (!v.aantal) return;
+            b.getCell(r.rowIndex + i, r.columnIndex + j).values = [[v.tekst]];
+            aantal += v.aantal;
+          }),
+        );
+      }
+      await ctx.sync();
+      return aantal;
+    });
+    this.kaart = [];
+    return aantal;
+  };
+
+  /** Excel geeft geen deel van een cel als selectie; de geselecteerde cellen met tekst. */
+  leesSelectie = async (): Promise<string> =>
+    Excel.run(async (ctx) => {
+      const r = ctx.workbook.getSelectedRange();
+      r.load("values");
+      await ctx.sync();
+      return schoonSelectie(r.values.flat().filter((c) => typeof c === "string" && c.trim()).join(" "));
+    });
 
   leverBestand = (): Promise<Inhoud> => leesOfficeBestand("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Excel");
   schrijfAfdruk = (a: Afdruk) => schrijfAfdrukInBestand(a);

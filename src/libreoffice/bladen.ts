@@ -20,7 +20,7 @@ export class LibreOfficeBladenAdapter implements Adapter {
 
   werkomgeving(): Werkomgeving {
     const [id, naam] = NAMEN[this.soort];
-    return { id, naam, vermogens: [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven", "bestand-opleveren"] };
+    return { id, naam, vermogens: [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven", "bestand-opleveren", "tekst-vervangen", "selectie-lezen"] };
   }
 
   async leverInhoud(): Promise<Inhoud> {
@@ -40,6 +40,8 @@ export class LibreOfficeBladenAdapter implements Adapter {
   };
 
   leverBestand = (): Promise<Inhoud> => this.brug.leesBestand();
+  vervangTekst = (paren: { van: string; naar: string }[]): Promise<number> => this.brug.vervangTekst(paren);
+  leesSelectie = (): Promise<string> => this.brug.leesSelectie();
 
   toon(melding: Melding): void {
     this.melden(melding);

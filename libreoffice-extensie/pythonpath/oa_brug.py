@@ -26,6 +26,7 @@ from com.sun.star.awt import XCallback
 
 import oa_bladen as ob
 import oa_document as od
+import oa_tekst as ot
 from oa_kern import NietUitvoerbaar
 
 
@@ -174,7 +175,7 @@ class Brug:
             raise _Weg()
         h = self.hoofd.voer_uit
         if methode == "GET" and pad == "/status":
-            return {"naam": h(lambda: od.naam_van(doc)), "versie": "0.7.0", "soort": h(lambda: ob.soort_van(doc))}
+            return {"naam": h(lambda: od.naam_van(doc)), "versie": "0.9.0", "soort": h(lambda: ob.soort_van(doc))}
         # Rekenbladen en presentaties: html en herstellen op een plek (oa_bladen).
         if methode == "GET" and pad == "/html":
             return {"html": h(lambda: ob.html(doc))}
@@ -197,6 +198,11 @@ class Brug:
         if methode == "POST" and pad == "/vervang":
             h(lambda: od.vervang_alles(doc, lichaam["html"]))
             return {}
+        # Anonimiseren bij de bron: vervangen door plaatshouders, en de selectie lezen.
+        if methode == "POST" and pad == "/tekst-vervangen":
+            return {"aantal": h(lambda: ot.vervang_tekst(doc, lichaam["paren"]))}
+        if methode == "GET" and pad == "/selectie":
+            return {"tekst": h(lambda: ot.lees_selectie(doc))}
         if pad == "/eigenschap":
             if methode == "GET":
                 from urllib.parse import parse_qs, urlparse

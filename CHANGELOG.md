@@ -1,5 +1,21 @@
 # Wijzigingen
 
+## 0.10.0 — 2026-11-09
+
+Anonimiseren bij de bron: de vermogens `tekst-vervangen` en `selectie-lezen`, in alle werkomgevingen. Vervangen gaat altijd als heel woord ("Jan" niet in "Janssen"), hoofdlettergevoelig, de langste waarde eerst.
+
+| Werkomgeving | Vervangen | Selectie |
+|---|---|---|
+| Demo (rijk) | tekstknopen | ja |
+| Word | `body.search` (heel woord) + `insertText` | ja |
+| Excel | per cel met vaste tekst, niet in formules | geselecteerde cellen |
+| PowerPoint | per tekstvak met `getSubstring` (PowerPointApi 1.4); de rest van de opmaak blijft | geselecteerde tekst (1.5) |
+| LibreOffice Writer, Calc | zoeken en vervangen van LibreOffice (ICU, woordgrens) | ja |
+| LibreOffice Impress | per tekstvak met een tekstcursor | ja |
+| Collabora | `.uno:ExecuteSearch` via postMessage; telt voor en na in het opgeslagen bestand | nee |
+
+LibreOffice-extensie 0.9.0: nieuwe vragen `/tekst-vervangen` en `/selectie` (`oa_tekst.py`). Een oudere extensie geeft een duidelijke melding: installeer de nieuwe versie.
+
 ## 0.9.1 — 2026-11-09
 
 Paneel 0.6.0 met de module Anonimiseren. De knop Anonimiseren in de werkbalk van LibreOffice heet niet meer "(volgt)"; extensie 0.8.1.

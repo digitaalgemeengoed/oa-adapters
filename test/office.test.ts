@@ -17,7 +17,15 @@ function verzameling<T>(items: T[], extra: Record<string, unknown> = {}) {
 }
 
 function pptVorm(v: Vorm) {
-  const range = { get text() { return v.tekst ?? ""; }, set text(t: string) { v.tekst = t; }, load() { return this; }, font: {} };
+  const range = {
+    get text() { return v.tekst ?? ""; },
+    set text(t: string) { v.tekst = t; },
+    load() { return this; },
+    font: {},
+    getSubstring: (start: number, lengte: number) => ({
+      set text(t: string) { v.tekst = (v.tekst ?? "").slice(0, start) + t + (v.tekst ?? "").slice(start + lengte); },
+    }),
+  };
   return Object.assign(v, {
     load: () => undefined,
     placeholderFormat: { type: v.plaats, load() { return this; } },
@@ -34,6 +42,7 @@ const dias: { id: string; vormen: Vorm[] }[] = [
 const pptCtx = () => ({
   sync: async () => undefined,
   presentation: {
+    getSelectedTextRangeOrNullObject: () => ({ isNullObject: false, text: "  Jan\u000bde Vries ", load: () => undefined }),
     setSelectedSlides: (ids: string[]) => geselecteerd.push(...ids),
     slides: Object.assign(
       verzameling(dias.map((d) => ({ id: d.id, shapes: verzameling(d.vormen.map(pptVorm)) }))),
@@ -64,12 +73,14 @@ const bladen: { id: string; name: string; waarden: unknown[][] | null; vormen: V
 const xlCtx = () => ({
   sync: async () => undefined,
   workbook: {
+    getSelectedRange: () => ({ values: [["Jan de Vries", 12], ["", "Utrecht"]], load: () => undefined }),
     worksheets: Object.assign(
       verzameling(
         bladen.map((b) => ({
           get id() { return b.id; },
           get name() { return b.name; },
-          getUsedRangeOrNullObject: () => ({ isNullObject: !b.waarden, values: b.waarden ?? [], load: () => undefined }),
+          getUsedRangeOrNullObject: () => ({ isNullObject: !b.waarden, values: b.waarden ?? [], formulas: b.waarden ?? [], rowIndex: 0, columnIndex: 0, load: () => undefined }),
+          getCell: (r: number, k: number) => ({ set values(w: unknown[][]) { b.waarden![r]![k] = w[0]![0]; } }),
           charts: verzameling(Array.from({ length: b.grafieken }, () => ({}))),
           shapes: verzameling(b.vormen),
         })),
@@ -150,4 +161,32 @@ test("Excel: bladen als secties, hernoemen en alternatieve tekst", { skip }, asy
   assert.deepEqual(beoordeel((await a.leverInhoud()).data), []);
   await a.schrijfAfdruk!({ id: "x" } as never);
   assert.deepEqual(await a.leesAfdruk!(), { id: "x" });
+});
+
+test("PowerPoint: tekst vervangen als heel woord, de langste waarde eerst; selectie lezen", async () => {
+  const a = new PowerPointAdapter(() => undefined);
+  dias[0]!.vormen.push({ id: "pii", name: "TextBox 9", type: "TextBox", tekst: "Jan de Vries\rJanssen en Jan\rBel 06-12345678" });
+  const n = await a.vervangTekst!([
+    { van: "Jan", naar: "[PERSOON 2]" },
+    { van: "Jan de Vries", naar: "[PERSOON 1]" },
+    { van: "06-12345678", naar: "[TELEFOON 1]" },
+  ]);
+  assert.equal(n, 3);
+  assert.equal(dias[0]!.vormen.find((v) => v.id === "pii")!.tekst, "[PERSOON 1]\rJanssen en [PERSOON 2]\rBel [TELEFOON 1]");
+  assert.equal(await a.leesSelectie!(), "Jan de Vries");
+  assert.ok(a.werkomgeving().vermogens.includes("tekst-vervangen"));
+  dias[0]!.vormen.pop();
+});
+
+test("Excel: tekst vervangen in cellen met vaste tekst, niet in formules", async () => {
+  const a = new ExcelAdapter(() => undefined);
+  bladen[1]!.waarden = [["Aanvrager: Jan de Vries", "=CONCAT(\"Jan\")", 7], ["Janssen", "Jan", null]];
+  const n = await a.vervangTekst([
+    { van: "Jan", naar: "[PERSOON 2]" },
+    { van: "Jan de Vries", naar: "[PERSOON 1]" },
+  ]);
+  assert.equal(n, 2);
+  assert.deepEqual(bladen[1]!.waarden, [["Aanvrager: [PERSOON 1]", "=CONCAT(\"Jan\")", 7], ["Janssen", "[PERSOON 2]", null]]);
+  assert.equal(await a.leesSelectie(), "Jan de Vries Utrecht");
+  bladen[1]!.waarden = null;
 });

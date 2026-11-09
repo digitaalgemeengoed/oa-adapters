@@ -9,6 +9,7 @@ import {
   type Werkomgeving,
 } from "@digitaalgemeengoed/oa-contract";
 import { browserFragment, naarHtml, NietUitvoerbaar, plekNaarDoel, segmentNaarOpdracht, type Blok, type Doel, type MaakFragment, type Opdracht } from "./semantisch.js";
+import { ordenParen, schoonSelectie } from "./tekstvervangen.js";
 
 /**
  * Wat een echte tekstverwerker (Word, LibreOffice) moet kunnen, zonder html:
@@ -28,6 +29,10 @@ export interface Tekstverwerker {
   schrijfEigenschap(naam: string, waarde: string): Promise<void>;
   /** Het bestand zelf (docx, odt …), base64; voor het vastleggen van het origineel. */
   leesBestand?(): Promise<Inhoud>;
+  /** Waarden als heel woord vervangen in het document zelf; geeft het aantal vervangingen. */
+  vervangTekst?(paren: { van: string; naar: string }[]): Promise<number>;
+  /** De tekst die de medewerker nu geselecteerd heeft. */
+  leesSelectie?(): Promise<string>;
 }
 
 const AFDRUK = "oa-afdruk";
@@ -46,7 +51,17 @@ export class StructuurAdapter implements Adapter {
     private readonly fragment: MaakFragment = browserFragment,
   ) {
     if (tv.leesBestand) this.leverBestand = () => tv.leesBestand!();
+    if (tv.vervangTekst)
+      this.vervangTekst = async (paren) => {
+        const n = await tv.vervangTekst!(ordenParen(paren));
+        this.blokken = [];
+        return n;
+      };
+    if (tv.leesSelectie) this.leesSelectie = async () => schoonSelectie(await tv.leesSelectie!());
   }
+
+  readonly vervangTekst?: (paren: { van: string; naar: string }[]) => Promise<number>;
+  readonly leesSelectie?: () => Promise<string>;
 
   /** Het origineel; alleen als de tekstverwerker het bestand kan opleveren. */
   readonly leverBestand?: () => Promise<Inhoud>;
@@ -54,6 +69,8 @@ export class StructuurAdapter implements Adapter {
   werkomgeving(): Werkomgeving {
     const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven"];
     if (this.leverBestand) vermogens.push("bestand-opleveren");
+    if (this.vervangTekst) vermogens.push("tekst-vervangen");
+    if (this.leesSelectie) vermogens.push("selectie-lezen");
     return { id: this.tv.id, naam: this.tv.naam, vermogens };
   }
 

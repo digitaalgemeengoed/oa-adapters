@@ -1,5 +1,6 @@
 /// <reference types="office-js" />
 import { BASISVERMOGENS, type Adapter, type Afdruk, type Inhoud, type Melding, type Plek, type Vermogen, type Werkomgeving } from "@digitaalgemeengoed/oa-contract";
+import { heelWoord, ordenParen, schoonSelectie, type Paar } from "../tekstvervangen.js";
 import { eersteElement, esc, HANDMATIG, img, leesAfdrukUitBestand, leesOfficeBestand, NIET_GEVONDEN, padDelen, schrijfAfdrukInBestand } from "./gedeeld.js";
 
 /** Plaatshouders die een titel zijn. */
@@ -10,6 +11,33 @@ const OPSOMMING = new Set(["Body", "Content", "VerticalBody", "VerticalContent"]
 const TITELNAAM = /^(title|titel)\b/i;
 
 type Onderdeel = { soort: "titel"; vorm: string } | { soort: "tekst"; vorm: string } | { soort: "beeld"; vorm: string };
+
+/** Dia's, hun vormen en de tekst van elke vorm die tekst kan hebben. */
+async function laadTekstvormen(ctx: PowerPoint.RequestContext, plaatshouders: boolean, extra: (v: PowerPoint.Shape) => void = () => {}) {
+  const dias = ctx.presentation.slides;
+  dias.load("items/id");
+  await ctx.sync();
+  const vormen = dias.items.map((d) => {
+    d.shapes.load("items/id,items/name,items/type");
+    return d.shapes;
+  });
+  await ctx.sync();
+  // Tweede ronde: per vorm alleen laden wat bij dat soort vorm bestaat.
+  const plaats = new Map<string, PowerPoint.PlaceholderFormat>();
+  if (plaatshouders)
+    for (const v of vormen.flatMap((c) => c.items))
+      if (v.type === "Placeholder") plaats.set(v.id, v.placeholderFormat.load("type"));
+  await ctx.sync();
+  const tekst = new Map<string, PowerPoint.TextRange>();
+  for (const v of vormen.flatMap((c) => c.items)) {
+    const p = plaats.get(v.id)?.type;
+    const heeftTekst = v.type === "TextBox" || v.type === "GeometricShape" || (v.type === "Placeholder" && !(p && ZONDER_TEKST.has(p)));
+    if (heeftTekst) tekst.set(v.id, v.textFrame.textRange.load("text"));
+    extra(v);
+  }
+  await ctx.sync();
+  return { dias, vormen, plaats, tekst };
+}
 
 const regels = (t: string) => t.split(/[\r\n\u000b]+/).map((r) => r.trim()).filter(Boolean);
 
@@ -30,40 +58,24 @@ export class PowerPointAdapter implements Adapter {
   private readonly plaatshouders = Office.context.requirements.isSetSupported("PowerPointApi", "1.8");
   private readonly altTekst = Office.context.requirements.isSetSupported("PowerPointApi", "1.10");
   private readonly selecteren = Office.context.requirements.isSetSupported("PowerPointApi", "1.5");
+  /** TextRange.getSubstring: een deel van een tekstvak vervangen zonder de rest van de opmaak te verliezen. */
+  private readonly deeltekst = Office.context.requirements.isSetSupported("PowerPointApi", "1.4");
 
   constructor(private readonly melden: (m: Melding) => void) {}
 
   werkomgeving(): Werkomgeving {
     const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "afdruk-schrijven", "bestand-opleveren"];
-    if (this.selecteren) vermogens.push("plek-tonen");
+    if (this.selecteren) vermogens.push("plek-tonen", "selectie-lezen");
+    if (this.deeltekst) vermogens.push("tekst-vervangen");
     return { id: "powerpoint", naam: "Microsoft PowerPoint", vermogens };
   }
 
   async leverInhoud(): Promise<Inhoud> {
     let beeldenOverslagen = 0;
     const { html, kaart, ids } = await PowerPoint.run(async (ctx) => {
-      const dias = ctx.presentation.slides;
-      dias.load("items/id");
-      await ctx.sync();
-      const vormen = dias.items.map((d) => {
-        d.shapes.load("items/id,items/name,items/type");
-        return d.shapes;
-      });
-      await ctx.sync();
-      // Tweede ronde: per vorm alleen laden wat bij dat soort vorm bestaat.
-      const plaats = new Map<string, PowerPoint.PlaceholderFormat>();
-      if (this.plaatshouders)
-        for (const v of vormen.flatMap((c) => c.items))
-          if (v.type === "Placeholder") plaats.set(v.id, v.placeholderFormat.load("type"));
-      await ctx.sync();
-      const tekst = new Map<string, PowerPoint.TextRange>();
-      for (const v of vormen.flatMap((c) => c.items)) {
-        const p = plaats.get(v.id)?.type;
-        const heeftTekst = v.type === "TextBox" || v.type === "GeometricShape" || (v.type === "Placeholder" && !(p && ZONDER_TEKST.has(p)));
-        if (heeftTekst) tekst.set(v.id, v.textFrame.textRange.load("text"));
+      const { dias, vormen, plaats, tekst } = await laadTekstvormen(ctx, this.plaatshouders, (v) => {
         if (v.type === "Image" && this.altTekst) v.load("altTextDescription");
-      }
-      await ctx.sync();
+      });
 
       const kaart: Onderdeel[][] = [];
       const secties = vormen.map((c) => {
@@ -159,6 +171,48 @@ export class PowerPointAdapter implements Adapter {
       await ctx.sync();
     }).catch((e: Error) => this.melden({ soort: "fout", tekst: e.message }));
   };
+
+  /**
+   * Per tekstvak de vondsten van achter naar voren vervangen, zodat de
+   * posities kloppen en alleen het vervangen stuk zijn opmaak verliest.
+   */
+  get vervangTekst(): ((paren: Paar[]) => Promise<number>) | undefined {
+    if (!this.deeltekst) return undefined;
+    return async (paren) => {
+      const geordend = ordenParen(paren);
+      const aantal = await PowerPoint.run(async (ctx) => {
+        const { tekst } = await laadTekstvormen(ctx, this.plaatshouders);
+        let aantal = 0;
+        for (const bereik of tekst.values()) {
+          // Vondsten verzamelen op de oorspronkelijke tekst, zonder overlap; langste waarde wint.
+          const bezet: { begin: number; eind: number; naar: string }[] = [];
+          for (const p of geordend)
+            for (const m of bereik.text.matchAll(heelWoord(p.van))) {
+              const begin = m.index!;
+              const eind = begin + m[0].length;
+              if (!bezet.some((b) => begin < b.eind && eind > b.begin)) bezet.push({ begin, eind, naar: p.naar });
+            }
+          for (const b of bezet.sort((x, y) => y.begin - x.begin)) bereik.getSubstring(b.begin, b.eind - b.begin).text = b.naar;
+          aantal += bezet.length;
+        }
+        await ctx.sync();
+        return aantal;
+      });
+      this.kaart = [];
+      return aantal;
+    };
+  }
+
+  get leesSelectie(): (() => Promise<string>) | undefined {
+    if (!this.selecteren) return undefined;
+    return async () =>
+      PowerPoint.run(async (ctx) => {
+        const r = ctx.presentation.getSelectedTextRangeOrNullObject();
+        r.load("text");
+        await ctx.sync();
+        return schoonSelectie(r.isNullObject ? "" : r.text);
+      });
+  }
 
   leverBestand = (): Promise<Inhoud> => leesOfficeBestand("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "PowerPoint");
   schrijfAfdruk = (a: Afdruk) => schrijfAfdrukInBestand(a);

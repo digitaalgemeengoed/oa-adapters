@@ -120,6 +120,7 @@ const venster: CollaboraVenster = {
   herlaad: async () => {
     if (huidig) await openInEditor(huidig);
   },
+  unoOpdracht: (opdracht, args) => stuur({ MessageId: "Send_UNO_Command", Values: { Command: opdracht, Args: args } }),
 };
 
 const formaten = new Map<string, Formaat>();

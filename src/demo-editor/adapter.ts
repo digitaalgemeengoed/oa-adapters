@@ -8,6 +8,7 @@ import {
   type Vermogen,
   type Werkomgeving,
 } from "@digitaalgemeengoed/oa-contract";
+import { schoonSelectie, vervangInTekst, type Paar } from "../tekstvervangen.js";
 
 /**
  * Adapter voor de demo-tekstverwerker: een bewerkbaar html-element.
@@ -24,17 +25,25 @@ export interface DocumentOpslag {
 
 export class DemoEditorAdapter implements Adapter {
   private opslaanTerugroepen = new Set<() => void>();
+  /** De laatste selectie in de editor; een klik in het paneel kan de selectie anders wegnemen. */
+  private laatsteSelectie = "";
 
   constructor(
     private readonly editor: HTMLElement,
     private readonly bestand: DocumentOpslag,
     private readonly melden: (m: Melding) => void,
     private readonly soort: "rijk" | "beperkt" = "rijk",
-  ) {}
+  ) {
+    const doc = editor.ownerDocument;
+    doc.addEventListener("selectionchange", () => {
+      const sel = doc.getSelection();
+      if (sel && !sel.isCollapsed && sel.anchorNode && editor.contains(sel.anchorNode)) this.laatsteSelectie = sel.toString();
+    });
+  }
 
   werkomgeving(): Werkomgeving {
     const vermogens: Vermogen[] = [...BASISVERMOGENS];
-    if (this.soort === "rijk") vermogens.push("segment-vervangen", "plek-tonen", "opslaan-melden", "afdruk-schrijven");
+    if (this.soort === "rijk") vermogens.push("segment-vervangen", "plek-tonen", "opslaan-melden", "afdruk-schrijven", "tekst-vervangen", "selectie-lezen");
     return { id: `demo-editor-${this.soort}`, naam: this.soort === "rijk" ? "Demo-tekstverwerker" : "Demo-tekstverwerker (beperkt)", vermogens };
   }
 
@@ -100,6 +109,33 @@ export class DemoEditorAdapter implements Adapter {
     return async () => {
       const w = this.bestand.leesEigenschap("oa-afdruk");
       return w ? (JSON.parse(w) as Afdruk) : null;
+    };
+  }
+
+  get vervangTekst(): Adapter["vervangTekst"] {
+    if (this.soort !== "rijk") return undefined;
+    return async (paren: Paar[]) => {
+      const doc = this.editor.ownerDocument;
+      const loper = doc.createTreeWalker(this.editor, 4 /* NodeFilter.SHOW_TEXT */);
+      let aantal = 0;
+      for (let n = loper.nextNode(); n; n = loper.nextNode()) {
+        const r = vervangInTekst(n.nodeValue ?? "", paren);
+        if (r.aantal) {
+          n.nodeValue = r.tekst;
+          aantal += r.aantal;
+        }
+      }
+      if (aantal) this.editor.dispatchEvent(new Event("input", { bubbles: true }));
+      return aantal;
+    };
+  }
+
+  get leesSelectie(): Adapter["leesSelectie"] {
+    if (this.soort !== "rijk") return undefined;
+    return async () => {
+      const sel = this.editor.ownerDocument.getSelection();
+      const nu = sel && !sel.isCollapsed && sel.anchorNode && this.editor.contains(sel.anchorNode) ? sel.toString() : "";
+      return schoonSelectie(nu || this.laatsteSelectie);
     };
   }
 

@@ -31,7 +31,7 @@ export class LibreOfficeTekstverwerker implements Tekstverwerker {
       throw new Error("Geen verbinding met LibreOffice. Kies in LibreOffice opnieuw Office Assistent → Assistent openen bij dit document.");
     }
     const j = (await r.json().catch(() => ({}))) as { melding?: string };
-    if (!r.ok) throw new Error(j.melding ?? `LibreOffice gaf fout ${r.status}`);
+    if (!r.ok) throw new Error(r.status === 404 ? TE_OUD : (j.melding ?? `LibreOffice gaf fout ${r.status}`));
     return j as T;
   }
 
@@ -73,6 +73,15 @@ export class LibreOfficeTekstverwerker implements Tekstverwerker {
     return this.vraag<Inhoud>("GET", "/bestand");
   }
 
+  /** Waarden als heel woord vervangen in het document (Writer, Calc en Impress); zie oa_tekst.py. */
+  async vervangTekst(paren: { van: string; naar: string }[]): Promise<number> {
+    return (await this.vraag<{ aantal: number }>("POST", "/tekst-vervangen", { paren })).aantal;
+  }
+
+  async leesSelectie(): Promise<string> {
+    return (await this.vraag<{ tekst: string }>("GET", "/selectie")).tekst;
+  }
+
   async leesEigenschap(naam: string): Promise<string | null> {
     return (await this.vraag<{ waarde: string | null }>("GET", `/eigenschap?naam=${encodeURIComponent(naam)}`)).waarde;
   }
@@ -88,6 +97,9 @@ export class LibreOfficeTekstverwerker implements Tekstverwerker {
 // extensie biedt daar een berichtkanaal (window.webkit.messageHandlers.oaBrug)
 // en antwoordt via window.__oaBrugAntwoord.
 // ---------------------------------------------------------------------------
+
+/** Een oudere extensie kent een nieuwe vraag niet. */
+const TE_OUD = "De LibreOffice-extensie op deze computer is te oud voor deze functie. Installeer de nieuwe versie (zie de pagina Office-programma's).";
 
 interface Kanaal {
   postMessage(bericht: unknown): void;
@@ -110,7 +122,7 @@ function viaKanaal<T>(kanaal: Kanaal, sleutel: string, methode: string, pad: str
     if (!w) return;
     wachtend.delete(id);
     if (a.status >= 200 && a.status < 300) w.klaar(a.lichaam);
-    else w.fout(new Error(a.lichaam?.melding ?? `LibreOffice gaf fout ${a.status}`));
+    else w.fout(new Error(a.status === 404 ? TE_OUD : (a.lichaam?.melding ?? `LibreOffice gaf fout ${a.status}`)));
   };
   const id = ++volgnummer;
   return new Promise<T>((klaar, fout) => {

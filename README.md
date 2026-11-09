@@ -9,11 +9,13 @@
 | Werkomgeving | Adapter | Vermogens | Pagina |
 |---|---|---|---|
 | Demo-tekstverwerker | `DemoEditorAdapter` (rijk of beperkt) | alle, of alleen de drie basisvermogens | `/werkomgeving` |
-| Microsoft Word, ook Word voor het web | `StructuurAdapter` + `WordTekstverwerker` (Office.js, WordApi 1.3) | basis, segment-vervangen, plek-tonen, afdruk-schrijven | `/word/taskpane.html`, manifest op `/word/manifest.xml` |
-| Microsoft Excel, ook Excel voor het web | `ExcelAdapter` (Office.js, ExcelApi 1.9) | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren | zelfde takenvenster en manifest |
-| Microsoft PowerPoint, ook PowerPoint voor het web | `PowerPointAdapter` (Office.js, PowerPointApi 1.4; titels 1.8, alternatieve tekst 1.10) | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren | zelfde takenvenster en manifest |
-| LibreOffice Writer, Calc en Impress op de eigen computer | zijpaneel in Writer (Python, zelfde regels als `semantisch.ts` en `oa-kern`); of het paneel in de browser via `StructuurAdapter` + `LibreOfficeTekstverwerker` | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren | zijbalk **Assistent**; `/libreoffice` |
-| Collabora Online | `CollaboraAdapter` (postMessage en WOPI) | basis, afdruk-schrijven; voor ods en odp ook segment-vervangen | `/collabora` |
+| Microsoft Word, ook Word voor het web | `StructuurAdapter` + `WordTekstverwerker` (Office.js, WordApi 1.3) | basis, segment-vervangen, plek-tonen, afdruk-schrijven, tekst-vervangen, selectie-lezen | `/word/taskpane.html`, manifest op `/word/manifest.xml` |
+| Microsoft Excel, ook Excel voor het web | `ExcelAdapter` (Office.js, ExcelApi 1.9) | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren, tekst-vervangen, selectie-lezen | zelfde takenvenster en manifest |
+| Microsoft PowerPoint, ook PowerPoint voor het web | `PowerPointAdapter` (Office.js, PowerPointApi 1.4; titels 1.8, alternatieve tekst 1.10) | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren, tekst-vervangen, selectie-lezen | zelfde takenvenster en manifest |
+| LibreOffice Writer, Calc en Impress op de eigen computer | zijpaneel in Writer (Python, zelfde regels als `semantisch.ts` en `oa-kern`); of het paneel in de browser via `StructuurAdapter` + `LibreOfficeTekstverwerker` | basis, segment-vervangen, plek-tonen, afdruk-schrijven, bestand-opleveren, tekst-vervangen, selectie-lezen | zijbalk **Assistent**; `/libreoffice` |
+| Collabora Online | `CollaboraAdapter` (postMessage en WOPI) | basis, afdruk-schrijven, tekst-vervangen; voor ods en odp ook segment-vervangen | `/collabora` |
+
+**Anonimiseren bij de bron** gebruikt `tekst-vervangen` (persoonsgegevens als heel woord vervangen door hun plaatshouder) en `selectie-lezen` (tekst die de medewerker in het document selecteert). Hoe elke werkomgeving dat doet staat in de CHANGELOG (0.10.0). Collabora kan de selectie niet doorgeven; daar voeg je toe via het voorbeeld in het paneel.
 
 Collabora laat zien hoe de assistent terugvalt: deelvervangen kan daar niet, dus vervangt hij het hele document en laadt het opnieuw.
 

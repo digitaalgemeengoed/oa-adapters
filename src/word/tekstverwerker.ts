@@ -189,6 +189,38 @@ export class WordTekstverwerker implements Tekstverwerker {
     });
   }
 
+  /** Zoeken en vervangen als heel woord; de opmaak van de vervangen tekst blijft staan. */
+  async vervangTekst(paren: { van: string; naar: string }[]): Promise<number> {
+    return Word.run(async (ctx) => {
+      const vondsten = paren
+        .filter((p) => p.van.length <= 255) // grens van body.search
+        .map((p) => {
+          // ^ is in Word ook zonder jokertekens een stuurteken (^p, ^t).
+          const r = ctx.document.body.search(p.van.replace(/\^/g, "^^"), { matchCase: true, matchWholeWord: true });
+          r.load("items");
+          return { p, r };
+        });
+      await ctx.sync();
+      let aantal = 0;
+      for (const { p, r } of vondsten)
+        for (const bereik of r.items) {
+          bereik.insertText(p.naar, "Replace");
+          aantal++;
+        }
+      await ctx.sync();
+      return aantal;
+    });
+  }
+
+  async leesSelectie(): Promise<string> {
+    return Word.run(async (ctx) => {
+      const sel = ctx.document.getSelection();
+      sel.load("text");
+      await ctx.sync();
+      return sel.text;
+    });
+  }
+
   async leesEigenschap(naam: string): Promise<string | null> {
     return Word.run(async (ctx) => {
       const p = ctx.document.properties.customProperties.getItemOrNullObject(naam);
