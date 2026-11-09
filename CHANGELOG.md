@@ -1,5 +1,9 @@
 # Wijzigingen
 
+## 0.16.1 — 2026-11-09 (LibreOffice-extensie 0.14.1)
+
+Het eigen paneel van LibreOffice toont de velden van het metadatamodel in de volgorde die de gemeente koos (zoals oa-kern 0.5.1).
+
 ## 0.16.0 — 2026-11-09 (LibreOffice-extensie 0.14.0)
 
 Het eigen paneel van LibreOffice volgt het metadatamodel van de gemeente, net als het webpaneel: velden via de rol, datum (met een hint) en getal, en het model waarmee een stuk is vastgelegd. `test/kruis.json` vergelijkt Python en TypeScript nu ook op een RGBZ-model met een eigen veld.

@@ -83,7 +83,9 @@ def velden(objecttype):
             "standaard": e.get("default"),
         })
     if schema.get("x-oa-model"):
-        return lijst
+        # De volgorde van de keuze van de gemeente (de database bewaart de sleutels anders).
+        plaats = {v.get("sleutel"): i for i, v in enumerate(((schema.get("x-oa-config") or {}).get("velden")) or [])}
+        return sorted(lijst, key=lambda v: plaats.get(v["naam"], 10 ** 9))
     return [v for v in lijst if v["verplicht"]] + [v for v in lijst if not v["verplicht"]]
 
 

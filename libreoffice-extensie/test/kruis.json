@@ -430,89 +430,10 @@
    ],
    "additionalProperties": false,
    "properties": {
-    "titel": {
-     "title": "Titel",
-     "description": "De titel van het stuk.",
-     "type": "string",
-     "maxLength": 200,
-     "x-rgbz": "titel",
-     "x-oa-rol": "titel"
-    },
-    "beschrijving": {
-     "title": "Beschrijving",
-     "description": "Een korte beschrijving van de inhoud.",
-     "type": "string",
-     "maxLength": 1000,
-     "x-oa-type": "lange-tekst",
-     "x-rgbz": "beschrijving",
-     "x-oa-rol": "omschrijving"
-    },
-    "vertrouwelijkheidaanduiding": {
-     "title": "Vertrouwelijkheid",
-     "description": "De vertrouwelijkheidaanduiding van het stuk.",
-     "enum": [
-      "openbaar",
-      "beperkt openbaar",
-      "intern",
-      "zaakvertrouwelijk",
-      "vertrouwelijk",
-      "confidentieel",
-      "geheim",
-      "zeer geheim"
-     ],
-     "x-rgbz": "vertrouwelijkheidaanduiding",
-     "x-oa-rol": "vertrouwelijkheid"
-    },
-    "auteur": {
-     "title": "Auteur",
-     "description": "De persoon of organisatie die het stuk heeft gemaakt.",
-     "type": "string",
-     "maxLength": 200,
-     "x-rgbz": "auteur",
-     "x-oa-rol": "auteur"
-    },
-    "creatiedatum": {
-     "title": "Creatiedatum",
-     "description": "De datum waarop het stuk is gemaakt.",
-     "type": "string",
-     "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-     "x-oa-type": "datum",
-     "x-rgbz": "creatiedatum",
-     "x-oa-rol": "datum"
-    },
-    "status": {
-     "title": "Status",
-     "description": "Waar het stuk staat in zijn levensloop.",
-     "enum": [
-      "in bewerking",
-      "ter vaststelling",
-      "definitief",
-      "gearchiveerd"
-     ],
-     "x-rgbz": "status"
-    },
-    "taal": {
-     "title": "Taal",
-     "description": "De taal van het stuk, in drie letters zoals de ZGW-API's die gebruiken.",
-     "enum": [
-      "dut",
-      "eng",
-      "ger",
-      "fre",
-      "fry",
-      "pap"
-     ],
-     "default": "dut",
-     "x-rgbz": "taal",
-     "x-oa-rol": "taal"
-    },
-    "zaak": {
-     "title": "Zaak",
-     "description": "Het zaaknummer waar het stuk bij hoort.",
-     "type": "string",
-     "maxLength": 100,
-     "x-rgbz": "zaakinformatieobject.zaak",
-     "x-oa-rol": "zaak"
+    "bedrag": {
+     "title": "Bedrag",
+     "type": "number",
+     "x-oa-eigen": true
     },
     "informatiecategorie": {
      "title": "Informatiecategorie (Woo)",
@@ -538,10 +459,89 @@
      ],
      "x-oa-rol": "informatiecategorie"
     },
-    "bedrag": {
-     "title": "Bedrag",
-     "type": "number",
-     "x-oa-eigen": true
+    "zaak": {
+     "title": "Zaak",
+     "description": "Het zaaknummer waar het stuk bij hoort.",
+     "type": "string",
+     "maxLength": 100,
+     "x-rgbz": "zaakinformatieobject.zaak",
+     "x-oa-rol": "zaak"
+    },
+    "taal": {
+     "title": "Taal",
+     "description": "De taal van het stuk, in drie letters zoals de ZGW-API's die gebruiken.",
+     "enum": [
+      "dut",
+      "eng",
+      "ger",
+      "fre",
+      "fry",
+      "pap"
+     ],
+     "default": "dut",
+     "x-rgbz": "taal",
+     "x-oa-rol": "taal"
+    },
+    "status": {
+     "title": "Status",
+     "description": "Waar het stuk staat in zijn levensloop.",
+     "enum": [
+      "in bewerking",
+      "ter vaststelling",
+      "definitief",
+      "gearchiveerd"
+     ],
+     "x-rgbz": "status"
+    },
+    "creatiedatum": {
+     "title": "Creatiedatum",
+     "description": "De datum waarop het stuk is gemaakt.",
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+     "x-oa-type": "datum",
+     "x-rgbz": "creatiedatum",
+     "x-oa-rol": "datum"
+    },
+    "auteur": {
+     "title": "Auteur",
+     "description": "De persoon of organisatie die het stuk heeft gemaakt.",
+     "type": "string",
+     "maxLength": 200,
+     "x-rgbz": "auteur",
+     "x-oa-rol": "auteur"
+    },
+    "vertrouwelijkheidaanduiding": {
+     "title": "Vertrouwelijkheid",
+     "description": "De vertrouwelijkheidaanduiding van het stuk.",
+     "enum": [
+      "openbaar",
+      "beperkt openbaar",
+      "intern",
+      "zaakvertrouwelijk",
+      "vertrouwelijk",
+      "confidentieel",
+      "geheim",
+      "zeer geheim"
+     ],
+     "x-rgbz": "vertrouwelijkheidaanduiding",
+     "x-oa-rol": "vertrouwelijkheid"
+    },
+    "beschrijving": {
+     "title": "Beschrijving",
+     "description": "Een korte beschrijving van de inhoud.",
+     "type": "string",
+     "maxLength": 1000,
+     "x-oa-type": "lange-tekst",
+     "x-rgbz": "beschrijving",
+     "x-oa-rol": "omschrijving"
+    },
+    "titel": {
+     "title": "Titel",
+     "description": "De titel van het stuk.",
+     "type": "string",
+     "maxLength": 200,
+     "x-rgbz": "titel",
+     "x-oa-rol": "titel"
     }
    }
   }
