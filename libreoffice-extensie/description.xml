@@ -4,7 +4,7 @@
              xmlns:lo="http://libreoffice.org/extensions/description/2011"
              xmlns:xlink="http://www.w3.org/1999/xlink">
   <identifier value="nl.digitaalgemeengoed.office-assistent"/>
-  <version value="0.12.0"/>
+  <version value="0.13.0"/>
   <display-name>
     <name lang="nl">Office Assistent</name>
     <name lang="en">Office Assistent</name>

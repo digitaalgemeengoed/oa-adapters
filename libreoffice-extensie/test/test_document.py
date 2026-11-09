@@ -136,6 +136,17 @@ class Test(unittest.TestCase):
         self.assertIn(b"Raadsvoorstel", z.read("content.xml"))
         self.assertEqual(self.doc.getURL(), "", "de opslagplek van het document blijft gelijk")
 
+    def test_46_bestand_ooxml(self):
+        # Voor de toegankelijkheidscontrole van het bestand (oa-wcag): docx, en het document blijft waar het was.
+        import base64, zipfile, io
+        b = od.bestand(self.doc, ooxml=True)
+        self.assertEqual(b["formaat"], "docx")
+        self.assertEqual(b["mediaType"], "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        z = zipfile.ZipFile(io.BytesIO(base64.b64decode(b["data"])))
+        self.assertIn(b"Raadsvoorstel", z.read("word/document.xml"))
+        self.assertIn(b"w:lang", z.read("word/styles.xml"), "de taal staat in de standaardopmaak, waar oa-wcag haar zoekt")
+        self.assertEqual(self.doc.getURL(), "", "de opslagplek van het document blijft gelijk")
+
     def test_5_vervang_alles(self):
         od.vervang_alles(self.doc, "<h1>Nieuw</h1><p>Tekst met <a href='https://x'>link</a></p>")
         r = od.lees_blokken(self.doc)

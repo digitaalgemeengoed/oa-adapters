@@ -134,6 +134,9 @@ class WriterDocument:
     def bestand(self):
         return self.h(lambda: od.bestand(self.doc))
 
+    def bestand_ooxml(self):
+        return self.h(lambda: od.bestand(self.doc, ooxml=True))
+
     def voer_uit(self, opdracht):
         return self.h(lambda: od.voer_uit(self.doc, opdracht))
 
@@ -867,7 +870,10 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
         self.y += 18 + 4
         self.y += self.tekst(b.get("melding", "")) + 2
         plek = b.get("plek")
-        self.regel(b.get("regel", "") + (" · " + plek["beschrijving"] if plek else ""), grootte=8, kleur=GRIJS)
+        bron = " · uit het bestand" if b.get("bron") == "bestand" else ""
+        self.regel(b.get("regel", "") + (" · " + plek["beschrijving"] if plek else "") + bron, grootte=8, kleur=GRIJS)
+        # Zonder pad (een bevinding uit het bestand) kan de assistent de plek niet aanwijzen of herstellen.
+        plek = plek if plek and plek.get("pad") else None
         v = b.get("voorstel") or {}
         if v.get("beschrijving"):
             self.regel(v["beschrijving"], grootte=8.5)

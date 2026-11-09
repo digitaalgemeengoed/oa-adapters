@@ -30,7 +30,7 @@ export interface Tekstverwerker {
   leesEigenschap(naam: string): Promise<string | null>;
   schrijfEigenschap(naam: string, waarde: string): Promise<void>;
   /** Het bestand zelf (docx, odt …), base64; voor het vastleggen van het origineel. */
-  leesBestand?(): Promise<Inhoud>;
+  leesBestand?(voorkeur?: "ooxml"): Promise<Inhoud>;
   /** Waarden als heel woord vervangen in het document zelf; geeft het aantal vervangingen. */
   vervangTekst?(paren: { van: string; naar: string }[]): Promise<number>;
   /** De tekst die de medewerker nu geselecteerd heeft. */
@@ -60,7 +60,7 @@ export class StructuurAdapter implements Adapter {
     private readonly melden: (m: Melding) => void,
     private readonly fragment: MaakFragment = browserFragment,
   ) {
-    if (tv.leesBestand) this.leverBestand = () => tv.leesBestand!();
+    if (tv.leesBestand) this.leverBestand = (voorkeur?: "ooxml") => tv.leesBestand!(voorkeur);
     if (tv.vervangTekst)
       this.vervangTekst = async (paren) => {
         const n = await tv.vervangTekst!(ordenParen(paren));
@@ -98,7 +98,7 @@ export class StructuurAdapter implements Adapter {
   readonly leesSelectie?: () => Promise<string>;
 
   /** Het origineel; alleen als de tekstverwerker het bestand kan opleveren. */
-  readonly leverBestand?: () => Promise<Inhoud>;
+  readonly leverBestand?: (voorkeur?: "ooxml") => Promise<Inhoud>;
 
   werkomgeving(): Werkomgeving {
     const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven"];

@@ -26,6 +26,10 @@ OBJECTTYPE = "document"
 AFDRUK = "oa-afdruk"
 
 
+
+# Zo groot mag het bestand (base64) voor de toegankelijkheidscontrole zijn; de integratielaag neemt tot 30 MB aan.
+MAX_BESTAND_BASE64 = 26 * 1024 * 1024
+
 class Sessies:
     """De sessie voor alle documenten in deze LibreOffice, alleen in het geheugen."""
 
@@ -259,7 +263,17 @@ class Model:
         self._voer_uit("versie", werk)
 
     def _beoordeel(self):
-        r = self.verbinding.toegankelijkheid(self._lees_inhoud())
+        inhoud = self._lees_inhoud()
+        # Ook het bestand zelf (als docx/xlsx/pptx), voor wat in de inhoud niet te zien is. Lukt dat niet: alleen de inhoud.
+        bestand = None
+        try:
+            if hasattr(self.document, "bestand_ooxml"):
+                bestand = self.document.bestand_ooxml()
+                if len(bestand.get("data", "")) > MAX_BESTAND_BASE64:
+                    bestand = None
+        except Exception:
+            bestand = None
+        r = self.verbinding.toegankelijkheid(inhoud, bestand=bestand)
         self.bevindingen = r.get("bevindingen") or []
 
     def beoordeel(self):

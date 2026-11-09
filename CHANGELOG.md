@@ -1,5 +1,13 @@
 # Wijzigingen
 
+## 0.15.0 — 2026-11-09
+
+**Toegankelijkheid van het bestand zelf** (met oa-services 0.5.0 en oa-wcag):
+
+- LibreOffice-extensie 0.13.0: de brug levert het document ook als docx, xlsx of pptx (`/bestand-ooxml`, een kopie; het document blijft waar het was). Zowel het webpaneel als het eigen paneel sturen dat mee bij Beoordelen. Met een oudere extensie gaat het odt-bestand mee en meldt de assistent dat de uitgebreide controle daarvoor nog niet kan.
+- `leverBestand("ooxml")` in de LibreOffice-adapters. Word, Excel en PowerPoint leveren al docx, xlsx en pptx; Collabora levert docx bij tekst (rekenbladen en presentaties zijn daar ods en odp: nog alleen de html).
+- Het eigen paneel van LibreOffice toont bevindingen uit het bestand met "uit het bestand", zonder Toon of Herstellen.
+
 ## 0.14.1 — 2026-11-09
 
 - Bij het openen van het paneel (LibreOffice, Collabora, aanmeldvenster van Office): is de server niet bereikbaar of geeft hij een fout, dan een melding met *Opnieuw proberen* in plaats van een leeg paneel.

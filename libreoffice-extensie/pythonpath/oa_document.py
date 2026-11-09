@@ -254,11 +254,21 @@ ODF = {
 }
 
 
-def bestand(document):
-    """Het document als OpenDocument (.odt, .ods of .odp), zonder de opslagplek van het document te wijzigen."""
+# Voor de toegankelijkheidscontrole van het bestand (oa-wcag leest alleen OOXML).
+OOXML = {
+    "tekst": ("MS Word 2007 XML", "docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+    "rekenblad": ("Calc MS Excel 2007 XML", "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+    "presentatie": ("Impress MS PowerPoint 2007 XML", "pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
+}
+
+
+def bestand(document, ooxml=False):
+    """Het document als OpenDocument (.odt, .ods of .odp), of met ooxml=True als .docx, .xlsx of .pptx.
+    De opslagplek van het document verandert niet (storeToURL maakt een kopie)."""
     import base64
     from oa_bladen import soort_van
-    filter_naam, ext, media = ODF.get(soort_van(document), ODF["tekst"])
+    soorten = OOXML if ooxml else ODF
+    filter_naam, ext, media = soorten.get(soort_van(document), soorten["tekst"])
     fd, pad = tempfile.mkstemp(suffix="." + ext)
     os.close(fd)
     try:

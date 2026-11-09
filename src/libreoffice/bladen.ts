@@ -41,7 +41,7 @@ export class LibreOfficeBladenAdapter implements Adapter {
     this.brug.plek(plek.pad).catch((e: Error) => this.melden({ soort: "fout", tekst: e.message }));
   };
 
-  leverBestand = (): Promise<Inhoud> => this.brug.leesBestand();
+  leverBestand = (voorkeur?: "ooxml"): Promise<Inhoud> => this.brug.leesBestand(voorkeur);
   vervangTekst = (paren: { van: string; naar: string }[]): Promise<number> => this.brug.vervangTekst(paren);
   leesSelectie = (): Promise<string> => this.brug.leesSelectie();
   schrijfDocumenteigenschap = (naam: string, waarde: string): Promise<void> => this.brug.schrijfDocumenteigenschap(naam, waarde);

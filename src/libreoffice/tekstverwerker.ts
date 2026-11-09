@@ -69,7 +69,15 @@ export class LibreOfficeTekstverwerker implements Tekstverwerker {
   }
 
   /** Het document als OpenDocument (.odt), het eigen formaat van Writer. */
-  leesBestand(): Promise<Inhoud> {
+  /** Het document als bestand; met voorkeur "ooxml" als docx, xlsx of pptx (extensie 0.13.0 of nieuwer). */
+  async leesBestand(voorkeur?: "ooxml"): Promise<Inhoud> {
+    if (voorkeur === "ooxml") {
+      try {
+        return await this.vraag<Inhoud>("GET", "/bestand-ooxml");
+      } catch {
+        /* Oudere extensie: het gewone formaat (odt …). */
+      }
+    }
     return this.vraag<Inhoud>("GET", "/bestand");
   }
 

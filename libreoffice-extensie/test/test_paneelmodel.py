@@ -30,6 +30,9 @@ class NepDocument:
     def bestand(self):
         return {"formaat": "odt", "mediaType": "application/vnd.oasis.opendocument.text", "codering": "base64", "data": "UEs="}
 
+    def bestand_ooxml(self):
+        return {"formaat": "docx", "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "codering": "base64", "data": "UEs="}
+
     def voer_uit(self, o):
         self.opdrachten.append(o)
         if o["soort"] == "niveau":
@@ -67,8 +70,9 @@ class NepVerbinding:
     def gebeurtenissen(self, i):
         return [{"type": "geregistreerd", "tijdstip": "2026-11-08T20:00:00Z", "actor": {"naam": "Femke"}}]
 
-    def toegankelijkheid(self, inhoud):
+    def toegankelijkheid(self, inhoud, taal=None, bestand=None):
         self.s.beoordeeld.append(inhoud["data"])
+        self.s.bestanden = getattr(self.s, "bestanden", []) + [bestand]
         b = []
         if "<strong>Inleiding</strong>" in inhoud["data"]:
             b.append({"id": "kop", "module": "toegankelijkheid", "ernst": "waarschuwing", "regel": "WCAG 1.3.1", "melding": "Vet als kop", "plek": {"pad": "body/1", "beschrijving": "alinea 2"}, "voorstel": {"vervanging": "<h2>Inleiding</h2>"}})
@@ -155,6 +159,7 @@ class ModelTest(unittest.TestCase):
         self.m.start()
         self.m.beoordeel()
         self.assertEqual([b["id"] for b in self.m.bevindingen], ["kop", "alt"])
+        self.assertEqual(self.server.bestanden[-1]["formaat"], "docx", "het bestand gaat als docx mee naar de controle")
         self.m.toon("alt")
         self.assertEqual(self.doc.getoond, [{"soort": "afbeelding", "alinea": 2, "afbeelding": 0}])
         self.m.herstel("kop")

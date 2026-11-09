@@ -210,6 +210,8 @@ class Brug:
             return h(lambda: od.lees_blokken(doc))
         if methode == "GET" and pad == "/bestand":
             return h(lambda: od.bestand(doc))
+        if methode == "GET" and pad == "/bestand-ooxml":
+            return h(lambda: od.bestand(doc, ooxml=True))
         if methode == "POST" and pad == "/opdracht":
             h(lambda: od.voer_uit(doc, lichaam))
             return {}

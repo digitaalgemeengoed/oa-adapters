@@ -110,10 +110,12 @@ class Verbinding:
     def gebeurtenissen(self, identificatie):
         return self.vraag("GET", LEES["gebeurtenissen"] % _id(identificatie))
 
-    def toegankelijkheid(self, inhoud, taal=None):
+    def toegankelijkheid(self, inhoud, taal=None, bestand=None):
         lichaam = {"inhoud": inhoud}
         if taal:
             lichaam["taal"] = taal
+        if bestand:
+            lichaam["bestand"] = bestand
         return self.vraag("POST", LEES["toegankelijkheid"], lichaam)
 
     def maak_object(self, objecttype, metadata, inhoud, weergave=None):
