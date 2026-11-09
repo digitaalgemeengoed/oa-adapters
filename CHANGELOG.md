@@ -1,5 +1,9 @@
 # Wijzigingen
 
+## 0.17.0 — 2026-11-09
+
+Hangt af van oa-paneel 0.10.0 en oa-contract 0.6.0 (*Laat staan* met reden, meting bij bevestigen). De LibreOffice-extensie blijft 0.14.1.
+
 ## 0.16.1 — 2026-11-09 (LibreOffice-extensie 0.14.1)
 
 Het eigen paneel van LibreOffice toont de velden van het metadatamodel in de volgorde die de gemeente koos (zoals oa-kern 0.5.1).
