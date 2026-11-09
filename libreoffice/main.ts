@@ -65,9 +65,11 @@ async function start() {
   if (brug.soort === "aanmelden") return aanmelden(brug);
   const tv = new LibreOfficeTekstverwerker(brug.poort, brug.sleutel);
   let soort: "tekst" | "rekenblad" | "presentatie" = "tekst";
+  let extensieVersie = "0";
   try {
     const s = await tv.status();
     soort = s.soort ?? "tekst";
+    extensieVersie = s.versie;
     const app = soort === "rekenblad" ? "LibreOffice Calc" : soort === "presentatie" ? "LibreOffice Impress" : "LibreOffice Writer";
     document.getElementById("document")!.textContent = `${app} — ${s.naam}`;
     document.title = `${s.naam} — Office Assistent`;
@@ -75,6 +77,13 @@ async function start() {
     meld({ soort: "fout", tekst: (e as Error).message });
     document.getElementById("uitleg")!.hidden = false;
     return;
+  }
+  // Anonimiseren in het document vraagt extensie 0.10.0 of nieuwer; met een oudere werkt het zoals vroeger (voorbeeld in het paneel).
+  if (!nieuwerOfGelijk(extensieVersie, "0.10.0")) {
+    const t = tv as unknown as Record<string, undefined>;
+    for (const m of ["markeerPii", "leesPiiPlekken", "herstelPii", "zetPiiDefinitief", "toonPiiPlek", "bijPiiKlik"]) t[m] = undefined;
+    if (soort === "tekst")
+      meld({ soort: "info", tekst: `Je LibreOffice-extensie is versie ${extensieVersie}. Installeer de nieuwe (zie de startpagina) om in het document zelf te anonimiseren.` });
   }
   const adapter = soort === "tekst" ? new StructuurAdapter(tv, meld) : new LibreOfficeBladenAdapter(tv, soort, meld);
   // In de zijbalk van LibreOffice staan rechts al de tabbladen van de zijbalk zelf: de knoppen van de modules dan bovenaan.
@@ -114,3 +123,11 @@ async function aanmelden(brug: Brug) {
 }
 
 start();
+
+/** Is versie a gelijk aan of nieuwer dan b (x.y.z)? */
+function nieuwerOfGelijk(a: string, b: string): boolean {
+  const x = a.split(".").map((d) => Number.parseInt(d, 10) || 0);
+  const y = b.split(".").map((d) => Number.parseInt(d, 10) || 0);
+  for (let i = 0; i < 3; i++) if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) > (y[i] ?? 0);
+  return true;
+}

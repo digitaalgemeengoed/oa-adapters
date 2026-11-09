@@ -14,6 +14,7 @@ import { icoonSvg, MODULES } from "../../oa-paneel/src/modules.tsx";
 const EXTRA = {
   paneel: "M2.5 3h11v10h-11zM9.5 3v10",
   beoordelen: "M7 11.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM10.5 10.5l3 3",
+  "anon-selectie": "M2 4.5h12M2 11.5h12M3.5 6.5h9v3h-9z",
 };
 const svg = (pad, kleur) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16" fill="none" stroke="${kleur}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="${pad}"/></svg>`;

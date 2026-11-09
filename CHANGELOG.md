@@ -1,5 +1,18 @@
 # Wijzigingen
 
+## 0.12.0 — 2026-11-09
+
+**LibreOffice Writer: anonimiseren in het document** (extensie 0.10.0).
+
+- Plaatshouders staan in de tekst met een bladwijzer eromheen (`oa-pii p12 [PERSOON 1] v`), gekleurd per niveau en met een gestippelde rand zolang het een voorvertoning is (`oa_pii.py`).
+- Klik je in een plaatshouder, dan opent het paneel de kaart (selectieluisteraar; het paneel vraagt het elke 0,7 seconde op, via het kanaal van de zijbalk of via http). Een cursor direct naast een plaatshouder telt niet.
+- Rechtermuisknop op een selectie: "Anonimiseer selectie (Assistent)"; ook als knop in de werkbalk Assistent.
+- Het versienummer als eigen documenteigenschap Versie (Bestand → Eigenschappen).
+- Met een oudere extensie werkt anonimiseren zoals in 0.10.0 (voorbeeld in het paneel), met een melding om de nieuwe te installeren.
+- De brug noemt de versie uit description.xml.
+
+Getest tegen een echte LibreOffice (zonder scherm) met het paneel in de browser: zoeken, klikken, laat staan, selectie toevoegen, bevestigen. Niet getest: het rechtermuismenu (vraagt een LibreOffice met scherm). Calc en Impress volgen.
+
 ## 0.11.0 — 2026-11-09
 
 - Demo-werkomgeving: plaatshouders als gemarkeerde elementen in het document (kleur per niveau, gestippeld bij voorvertoning), klik naar het paneel, per plek terugzetten, eigenschap Versie. Rechtermuisknop op een selectie: "Anonimiseer selectie".

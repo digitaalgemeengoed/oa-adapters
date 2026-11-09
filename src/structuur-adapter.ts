@@ -4,6 +4,8 @@ import {
   type Afdruk,
   type Inhoud,
   type Melding,
+  type PiiMarkering,
+  type PiiPlek,
   type Plek,
   type Vermogen,
   type Werkomgeving,
@@ -33,6 +35,14 @@ export interface Tekstverwerker {
   vervangTekst?(paren: { van: string; naar: string }[]): Promise<number>;
   /** De tekst die de medewerker nu geselecteerd heeft. */
   leesSelectie?(): Promise<string>;
+  /** Anonimiseren in het document (zie Adapter in het contract). */
+  markeerPii?(markeringen: PiiMarkering[]): Promise<PiiPlek[]>;
+  leesPiiPlekken?(): Promise<PiiPlek[]>;
+  herstelPii?(plekken: { plek: string; waarde: string }[]): Promise<void>;
+  zetPiiDefinitief?(): Promise<void>;
+  toonPiiPlek?(plek: string): void;
+  bijPiiKlik?(terugroep: (p: PiiPlek) => void): () => void;
+  schrijfDocumenteigenschap?(naam: string, waarde: string): Promise<void>;
 }
 
 const AFDRUK = "oa-afdruk";
@@ -58,7 +68,31 @@ export class StructuurAdapter implements Adapter {
         return n;
       };
     if (tv.leesSelectie) this.leesSelectie = async () => schoonSelectie(await tv.leesSelectie!());
+    if (tv.markeerPii && tv.leesPiiPlekken && tv.herstelPii) {
+      this.markeerPii = async (m) => {
+        const r = await tv.markeerPii!(m);
+        this.blokken = [];
+        return r;
+      };
+      this.leesPiiPlekken = () => tv.leesPiiPlekken!();
+      this.herstelPii = async (p) => {
+        await tv.herstelPii!(p);
+        this.blokken = [];
+      };
+      if (tv.zetPiiDefinitief) this.zetPiiDefinitief = () => tv.zetPiiDefinitief!();
+      if (tv.toonPiiPlek) this.toonPiiPlek = (p) => tv.toonPiiPlek!(p);
+      if (tv.bijPiiKlik) this.bijPiiKlik = (t) => tv.bijPiiKlik!(t);
+    }
+    if (tv.schrijfDocumenteigenschap) this.schrijfDocumenteigenschap = (n, w) => tv.schrijfDocumenteigenschap!(n, w);
   }
+
+  readonly markeerPii?: Adapter["markeerPii"];
+  readonly leesPiiPlekken?: Adapter["leesPiiPlekken"];
+  readonly herstelPii?: Adapter["herstelPii"];
+  readonly zetPiiDefinitief?: Adapter["zetPiiDefinitief"];
+  readonly toonPiiPlek?: Adapter["toonPiiPlek"];
+  readonly bijPiiKlik?: Adapter["bijPiiKlik"];
+  readonly schrijfDocumenteigenschap?: Adapter["schrijfDocumenteigenschap"];
 
   readonly vervangTekst?: (paren: { van: string; naar: string }[]) => Promise<number>;
   readonly leesSelectie?: () => Promise<string>;
@@ -71,6 +105,9 @@ export class StructuurAdapter implements Adapter {
     if (this.leverBestand) vermogens.push("bestand-opleveren");
     if (this.vervangTekst) vermogens.push("tekst-vervangen");
     if (this.leesSelectie) vermogens.push("selectie-lezen");
+    if (this.markeerPii) vermogens.push("pii-markeren");
+    if (this.bijPiiKlik) vermogens.push("pii-klik");
+    if (this.schrijfDocumenteigenschap) vermogens.push("eigenschap-schrijven");
     return { id: this.tv.id, naam: this.tv.naam, vermogens };
   }
 

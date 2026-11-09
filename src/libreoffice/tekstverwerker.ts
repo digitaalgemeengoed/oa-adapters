@@ -1,4 +1,4 @@
-import type { Inhoud } from "@digitaalgemeengoed/oa-contract";
+import type { Inhoud, PiiMarkering, PiiPlek } from "@digitaalgemeengoed/oa-contract";
 import type { Tekstverwerker } from "../structuur-adapter.js";
 import { groepeer, type Blok, type Doel, type Opdracht, type RuweAlinea, type Tabel } from "../semantisch.js";
 
@@ -80,6 +80,59 @@ export class LibreOfficeTekstverwerker implements Tekstverwerker {
 
   async leesSelectie(): Promise<string> {
     return (await this.vraag<{ tekst: string }>("GET", "/selectie")).tekst;
+  }
+
+  // --- Anonimiseren in het document (Writer); zie oa_pii.py ---------------
+
+  async markeerPii(markeringen: PiiMarkering[]): Promise<PiiPlek[]> {
+    return (await this.vraag<{ plekken: PiiPlek[] }>("POST", "/pii/markeer", { markeringen })).plekken;
+  }
+
+  async leesPiiPlekken(): Promise<PiiPlek[]> {
+    return (await this.vraag<{ plekken: PiiPlek[] }>("GET", "/pii/plekken")).plekken;
+  }
+
+  async herstelPii(plekken: { plek: string; waarde: string }[]): Promise<void> {
+    await this.vraag("POST", "/pii/herstel", { plekken });
+  }
+
+  async zetPiiDefinitief(): Promise<void> {
+    await this.vraag("POST", "/pii/definitief");
+  }
+
+  toonPiiPlek(plek: string): void {
+    this.vraag("POST", "/pii/toon", { plek }).catch(() => undefined);
+  }
+
+  /**
+   * Klikken in een plaatshouder: de extensie onthoudt de laatste (selectie-
+   * luisteraar); het paneel vraagt het elke 0,7 seconde op. Werkt via het
+   * kanaal van de zijbalk en via http.
+   */
+  bijPiiKlik(terugroep: (p: PiiPlek) => void): () => void {
+    // De extensie begint pas te tellen bij de eerste vraag; vanaf 0 dus.
+    let n = 0;
+    let weg = false;
+    const ronde = async () => {
+      if (weg) return;
+      try {
+        const s = await this.vraag<{ n: number } & Partial<PiiPlek>>("GET", "/pii/klik");
+        if (s.n > n && s.plek) terugroep({ plek: s.plek, plaatshouder: s.plaatshouder ?? "", voorvertoning: !!s.voorvertoning });
+        n = s.n;
+      } catch {
+        /* extensie te oud of document dicht: stil */
+      }
+      if (!weg) setTimeout(ronde, 700);
+    };
+    ronde();
+    return () => {
+      weg = true;
+    };
+  }
+
+  /** Een eigen documenteigenschap (Bestand → Eigenschappen → Aangepaste eigenschappen). */
+  schrijfDocumenteigenschap(naam: string, waarde: string): Promise<void> {
+    return this.schrijfEigenschap(naam, waarde);
   }
 
   async leesEigenschap(naam: string): Promise<string | null> {

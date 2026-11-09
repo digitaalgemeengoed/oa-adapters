@@ -27,6 +27,21 @@ from com.sun.star.awt import XCallback
 import oa_bladen as ob
 import oa_document as od
 import oa_tekst as ot
+import oa_pii as op
+
+
+def _versie():
+    """De versie uit description.xml van de extensie zelf."""
+    import os
+    import re
+    try:
+        with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "description.xml"), encoding="utf-8") as f:
+            return re.search(r'<version value="([^"]+)"', f.read()).group(1)
+    except Exception:
+        return "onbekend"
+
+
+VERSIE = _versie()
 from oa_kern import NietUitvoerbaar
 
 
@@ -82,6 +97,13 @@ class Brug:
         self.herkomst = herkomst.rstrip("/")
         self.sleutel = secrets.token_urlsafe(24)
         self.hoofd = _Hoofdthread(ctx)
+        # Klikken in plaatshouders en het rechtermuismenu (Writer). De brug ontstaat op de hoofdthread.
+        self.klikken = None
+        try:
+            if ob.soort_van(document) == "tekst":
+                self.klikken = op.Klikken(document)
+        except Exception:
+            traceback.print_exc()
         brug = self
 
         class Afhandeling(BaseHTTPRequestHandler):
@@ -175,7 +197,7 @@ class Brug:
             raise _Weg()
         h = self.hoofd.voer_uit
         if methode == "GET" and pad == "/status":
-            return {"naam": h(lambda: od.naam_van(doc)), "versie": "0.9.0", "soort": h(lambda: ob.soort_van(doc))}
+            return {"naam": h(lambda: od.naam_van(doc)), "versie": VERSIE, "soort": h(lambda: ob.soort_van(doc))}
         # Rekenbladen en presentaties: html en herstellen op een plek (oa_bladen).
         if methode == "GET" and pad == "/html":
             return {"html": h(lambda: ob.html(doc))}
@@ -203,6 +225,28 @@ class Brug:
             return {"aantal": h(lambda: ot.vervang_tekst(doc, lichaam["paren"]))}
         if methode == "GET" and pad == "/selectie":
             return {"tekst": h(lambda: ot.lees_selectie(doc))}
+        # Anonimiseren in het document (Writer): plaatshouders met bladwijzers, klikken, rechtermuismenu.
+        if methode == "GET" and pad == "/pii/klik":
+            # Vaak gevraagd (elke 0,7 s): alleen de eerste keer via de hoofdthread.
+            if self.klikken is None:
+                self.klikken = h(lambda: op.Klikken(doc) if ob.soort_van(doc) == "tekst" else False)
+            return self.klikken.stand() if self.klikken else {"n": 0}
+        if pad.startswith("/pii"):
+            if h(lambda: ob.soort_van(doc)) != "tekst":
+                raise NietUitvoerbaar("Plaatshouders in het document kan de assistent (nog) alleen in Writer.")
+            if methode == "POST" and pad == "/pii/markeer":
+                return {"plekken": h(lambda: op.markeer(doc, lichaam["markeringen"]))}
+            if methode == "GET" and pad == "/pii/plekken":
+                return {"plekken": h(lambda: op.lees_plekken(doc))}
+            if methode == "POST" and pad == "/pii/herstel":
+                h(lambda: op.herstel(doc, lichaam["plekken"]))
+                return {}
+            if methode == "POST" and pad == "/pii/definitief":
+                h(lambda: op.zet_definitief(doc))
+                return {}
+            if methode == "POST" and pad == "/pii/toon":
+                h(lambda: op.toon(doc, lichaam["plek"]))
+                return {}
         if pad == "/eigenschap":
             if methode == "GET":
                 from urllib.parse import parse_qs, urlparse

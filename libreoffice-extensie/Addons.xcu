@@ -112,6 +112,12 @@
             <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
             <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
           </node>
+          <node oor:name="k12" oor:op="replace">
+            <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:anon-selectie</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Anonimiseer selectie</value></prop>
+            <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
+            <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument</value></prop>
+          </node>
       </node>
     </node>
     <node oor:name="Images">
@@ -183,6 +189,13 @@
         <node oor:name="UserDefinedImages">
           <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-beoordelen-16.png</value></prop>
           <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-beoordelen-26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="nl.digitaalgemeengoed.oa.beeld.anon-selectie" oor:op="replace">
+        <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:anon-selectie</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL" oor:type="xs:string"><value>%origin%/icons/oa-anon-selectie-16.png</value></prop>
+          <prop oor:name="ImageBigURL" oor:type="xs:string"><value>%origin%/icons/oa-anon-selectie-26.png</value></prop>
         </node>
       </node>
     </node>
