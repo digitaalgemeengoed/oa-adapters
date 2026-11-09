@@ -215,6 +215,15 @@ def markeer(document, markeringen):
     return nieuw
 
 
+def herkleur(document, plaatshouder, ppl):
+    """Andere grondslag: de plekken van deze plaatshouder krijgen de kleur van het nieuwe niveau.
+    In opmerkingen staat platte tekst; daar is niets te kleuren."""
+    for m, bw in _bladwijzers(document):
+        if m.group(2) == plaatshouder:
+            a = bw.getAnchor()
+            _kleur(a.getText().createTextCursorByRange(a), int(ppl), bool(m.group(3)))
+
+
 def _in_plaatshouder(document, rng):
     for _m, bw in _bladwijzers(document):
         a = bw.getAnchor()
@@ -448,6 +457,14 @@ def herstel_bladen(document, plekken):
                 c.setPropertyToDefault(naam)
             except Exception:
                 pass
+
+
+def herkleur_bladen(document, plaatshouder, ppl):
+    for _kenmerk, vak in _vakken(document):
+        for m in PLAATSHOUDER.finditer(vak.getString()):
+            if m.group(0) == plaatshouder:
+                b, e = m.span()
+                _cursor(vak, b, e - b).CharColor = KLEUR.get(int(ppl), KLEUR[1])
 
 
 def zet_definitief_bladen(document):

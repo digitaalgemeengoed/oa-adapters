@@ -85,6 +85,8 @@ async function start() {
     for (const m of ["markeerPii", "leesPiiPlekken", "herstelPii", "zetPiiDefinitief", "toonPiiPlek", "bijPiiKlik"]) t[m] = undefined;
     meld({ soort: "info", tekst: `Je LibreOffice-extensie is versie ${extensieVersie}. Installeer de nieuwe (zie de startpagina) om in het document zelf te anonimiseren.` });
   }
+  // Herkleuren (andere grondslag) vraagt 0.13.2; zonder zet de kern de plekken terug en markeert ze opnieuw.
+  if (!nieuwerOfGelijk(extensieVersie, "0.13.2")) (tv as unknown as Record<string, undefined>).herkleurPii = undefined;
   const adapter = soort === "tekst" ? new StructuurAdapter(tv, meld) : new LibreOfficeBladenAdapter(tv, soort, meld);
   // In de zijbalk van LibreOffice staan rechts al de tabbladen van de zijbalk zelf: de knoppen van de modules dan bovenaan.
   // Een knop in de werkbalk Assistent van LibreOffice die al was ingedrukt voordat het paneel er stond.

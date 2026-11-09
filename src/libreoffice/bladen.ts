@@ -57,6 +57,9 @@ export class LibreOfficeBladenAdapter implements Adapter {
   get herstelPii(): Adapter["herstelPii"] {
     return this.brug.herstelPii ? (p) => this.brug.herstelPii(p) : undefined;
   }
+  get herkleurPii(): Adapter["herkleurPii"] {
+    return this.brug.herkleurPii ? (p, n) => this.brug.herkleurPii(p, n) : undefined;
+  }
   get zetPiiDefinitief(): Adapter["zetPiiDefinitief"] {
     return this.brug.zetPiiDefinitief ? () => this.brug.zetPiiDefinitief() : undefined;
   }

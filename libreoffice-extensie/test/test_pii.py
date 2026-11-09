@@ -35,6 +35,14 @@ class TestPii(unittest.TestCase):
             # kleur van art. 9
             bw = doc.getBookmarks().getByName("oa-pii %s [GEZONDHEID 1] v" % plekken[2]["plek"])
             self.assertEqual(bw.getAnchor().CharBackColor, op.ACHTERGROND[2])
+            # andere grondslag: alleen de kleur van die plaatshouder verandert
+            op.herkleur(doc, "[GEZONDHEID 1]", 3)
+            self.assertEqual(bw.getAnchor().CharBackColor, op.ACHTERGROND[3])
+            self.assertEqual(bw.getAnchor().CharColor, op.KLEUR[3])
+            self.assertEqual(t.getString(), "[PERSOON 1] belde [PERSOON 2]. Janssen niet. [GEZONDHEID 1] voor [PERSOON 2].")
+            self.assertEqual(doc.getBookmarks().getByName("oa-pii %s [PERSOON 1] v" % plekken[0]["plek"]).getAnchor().CharBackColor, op.ACHTERGROND[1])
+            op.herkleur(doc, "[GEZONDHEID 1]", 2)
+            self.assertEqual(bw.getAnchor().CharBackColor, op.ACHTERGROND[2])
             # één plek terug
             op.herstel(doc, [{"plek": plekken[3]["plek"], "waarde": "Jan"}])
             self.assertEqual(t.getString(), "[PERSOON 1] belde [PERSOON 2]. Janssen niet. [GEZONDHEID 1] voor Jan.")
@@ -131,6 +139,8 @@ class TestPiiBladen(unittest.TestCase):
             self.assertEqual(b.getCellByPosition(0, 1).getFormula(), '="Jan"')
             plekken = op.lees_plekken_bladen(doc)
             self.assertEqual([x["plek"] for x in plekken], ["s0c0r0#0", "s0c1r0#0", "s0c1r0#1"])
+            op.herkleur_bladen(doc, "[PERSOON 1]", 2)
+            self.assertEqual(b.getCellByPosition(0, 0).CharColor, op.KLEUR[2])
             op.herstel_bladen(doc, [{"plek": "s0c1r0#0", "waarde": "Jan"}])
             self.assertEqual(b.getCellByPosition(1, 0).getString(), "Bel Jan of [PERSOON 1]")
             op.zet_definitief_bladen(doc)

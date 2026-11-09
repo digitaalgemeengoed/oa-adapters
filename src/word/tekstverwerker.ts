@@ -1,5 +1,5 @@
 /// <reference types="office-js" />
-import type { Inhoud, PiiMarkering, PiiPlek } from "@digitaalgemeengoed/oa-contract";
+import type { Inhoud, PiiMarkering, PiiPlek, Ppl } from "@digitaalgemeengoed/oa-contract";
 import { PII_KLEUR } from "../tekstvervangen.js";
 import type { Tekstverwerker } from "../structuur-adapter.js";
 import { groepeer, niveauUitStijl, type Blok, type Doel, type Inline, type Opdracht, type RuweAlinea, type Tabel } from "../semantisch.js";
@@ -282,6 +282,13 @@ export class WordTekstverwerker implements Tekstverwerker {
 
   async leesPiiPlekken(): Promise<PiiPlek[]> {
     return Word.run(async (ctx) => (await this.plekken(ctx)).map((x) => x.p));
+  }
+
+  async herkleurPii(plaatshouder: string, ppl: Ppl): Promise<void> {
+    await Word.run(async (ctx) => {
+      for (const { cc, p } of await this.plekken(ctx)) if (p.plaatshouder === plaatshouder) cc.color = PII_KLEUR[ppl] ?? PII_KLEUR[1]!;
+      await ctx.sync();
+    });
   }
 
   async herstelPii(plekken: { plek: string; waarde: string }[]): Promise<void> {

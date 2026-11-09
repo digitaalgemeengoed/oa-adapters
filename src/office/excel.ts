@@ -215,6 +215,9 @@ export class ExcelAdapter implements Adapter {
       (await this.cellen(ctx)).flatMap((c) => plaatshoudersIn(c.tekst).map((p, i) => ({ plek: `${c.kenmerk}#${i}`, plaatshouder: p.plaatshouder, voorvertoning: false }))),
     );
 
+  /** Geen kleur in de cel of het tekstvak: een andere grondslag verandert hier niets. */
+  herkleurPii = async (): Promise<void> => undefined;
+
   herstelPii = async (plekken: { plek: string; waarde: string }[]): Promise<void> => {
     await Excel.run(async (ctx) => {
       const cellen = await this.cellen(ctx);

@@ -251,6 +251,9 @@ export class PowerPointAdapter implements Adapter {
       );
   }
 
+  /** Geen kleur in de cel of het tekstvak: een andere grondslag verandert hier niets. */
+  herkleurPii = async (): Promise<void> => undefined;
+
   get herstelPii(): ((p: { plek: string; waarde: string }[]) => Promise<void>) | undefined {
     if (!this.deeltekst) return undefined;
     return async (plekken) => {

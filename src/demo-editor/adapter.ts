@@ -6,6 +6,7 @@ import {
   type Melding,
   type PiiMarkering,
   type PiiPlek,
+  type Ppl,
   type Plek,
   type Vermogen,
   type Werkomgeving,
@@ -200,6 +201,14 @@ export class DemoEditorAdapter implements Adapter {
   get leesPiiPlekken(): Adapter["leesPiiPlekken"] {
     if (this.soort !== "rijk") return undefined;
     return async () => this.plekken().map((e) => ({ plek: e.getAttribute(PII)!, plaatshouder: e.textContent ?? "", voorvertoning: e.classList.contains("pv") }));
+  }
+
+  get herkleurPii(): Adapter["herkleurPii"] {
+    if (this.soort !== "rijk") return undefined;
+    return async (plaatshouder: string, ppl: Ppl) => {
+      for (const e of this.plekken()) if (e.textContent === plaatshouder) e.className = e.className.replace(/\bl\d\b/, `l${ppl}`);
+      this.editor.dispatchEvent(new Event("input", { bubbles: true }));
+    };
   }
 
   get herstelPii(): Adapter["herstelPii"] {

@@ -6,6 +6,7 @@ import {
   type Melding,
   type PiiMarkering,
   type PiiPlek,
+  type Ppl,
   type Plek,
   type Vermogen,
   type Werkomgeving,
@@ -40,6 +41,7 @@ export interface Tekstverwerker {
   leesPiiPlekken?(): Promise<PiiPlek[]>;
   herstelPii?(plekken: { plek: string; waarde: string }[]): Promise<void>;
   zetPiiDefinitief?(): Promise<void>;
+  herkleurPii?(plaatshouder: string, ppl: Ppl): Promise<void>;
   toonPiiPlek?(plek: string): void;
   bijPiiKlik?(terugroep: (p: PiiPlek) => void): () => void;
   schrijfDocumenteigenschap?(naam: string, waarde: string): Promise<void>;
@@ -80,6 +82,11 @@ export class StructuurAdapter implements Adapter {
         this.blokken = [];
       };
       if (tv.zetPiiDefinitief) this.zetPiiDefinitief = () => tv.zetPiiDefinitief!();
+      if (tv.herkleurPii)
+        this.herkleurPii = async (p, n) => {
+          await tv.herkleurPii!(p, n);
+          this.blokken = [];
+        };
       if (tv.toonPiiPlek) this.toonPiiPlek = (p) => tv.toonPiiPlek!(p);
       if (tv.bijPiiKlik) this.bijPiiKlik = (t) => tv.bijPiiKlik!(t);
     }
@@ -90,6 +97,7 @@ export class StructuurAdapter implements Adapter {
   readonly leesPiiPlekken?: Adapter["leesPiiPlekken"];
   readonly herstelPii?: Adapter["herstelPii"];
   readonly zetPiiDefinitief?: Adapter["zetPiiDefinitief"];
+  readonly herkleurPii?: Adapter["herkleurPii"];
   readonly toonPiiPlek?: Adapter["toonPiiPlek"];
   readonly bijPiiKlik?: Adapter["bijPiiKlik"];
   readonly schrijfDocumenteigenschap?: Adapter["schrijfDocumenteigenschap"];

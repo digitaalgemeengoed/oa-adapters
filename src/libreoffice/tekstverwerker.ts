@@ -1,4 +1,4 @@
-import type { Inhoud, PiiMarkering, PiiPlek } from "@digitaalgemeengoed/oa-contract";
+import type { Inhoud, PiiMarkering, PiiPlek, Ppl } from "@digitaalgemeengoed/oa-contract";
 import type { Tekstverwerker } from "../structuur-adapter.js";
 import { groepeer, type Blok, type Doel, type Opdracht, type RuweAlinea, type Tabel } from "../semantisch.js";
 
@@ -102,6 +102,10 @@ export class LibreOfficeTekstverwerker implements Tekstverwerker {
 
   async herstelPii(plekken: { plek: string; waarde: string }[]): Promise<void> {
     await this.vraag("POST", "/pii/herstel", { plekken });
+  }
+
+  async herkleurPii(plaatshouder: string, ppl: Ppl): Promise<void> {
+    await this.vraag("POST", "/pii/herkleur", { plaatshouder, ppl });
   }
 
   async zetPiiDefinitief(): Promise<void> {

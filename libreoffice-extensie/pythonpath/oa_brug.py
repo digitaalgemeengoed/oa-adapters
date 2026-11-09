@@ -242,6 +242,9 @@ class Brug:
             if methode == "POST" and pad == "/pii/herstel":
                 h(lambda: (op.herstel if w else op.herstel_bladen)(doc, lichaam["plekken"]))
                 return {}
+            if methode == "POST" and pad == "/pii/herkleur":
+                h(lambda: (op.herkleur if w else op.herkleur_bladen)(doc, lichaam["plaatshouder"], lichaam["ppl"]))
+                return {}
             if methode == "POST" and pad == "/pii/definitief":
                 h(lambda: (op.zet_definitief if w else op.zet_definitief_bladen)(doc))
                 return {}

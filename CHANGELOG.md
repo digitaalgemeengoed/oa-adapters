@@ -1,5 +1,14 @@
 # Wijzigingen
 
+## 0.15.2 — 2026-11-09 (LibreOffice-extensie 0.13.2)
+
+**Grondslag aanpassen.** Het paneel (0.8.4) laat de grondslag in gewone taal zien, met uitleg, en je kunt hem wijzigen zolang het een voorvertoning is. De plaatshouder krijgt dan de kleur van het nieuwe niveau (`herkleurPii`):
+
+- Word: de kleur van het inhoudsbesturingselement.
+- LibreOffice Writer en Calc/Impress: de kleur van de bladwijzer of de tekst (route `/pii/herkleur`, extensie 0.13.2). Met een oudere extensie zet de assistent de plekken terug en markeert ze opnieuw.
+- De werkomgeving in de browser: de kleur van de plaatshouder.
+- Excel en PowerPoint: geen kleur, er verandert niets in het document.
+
 ## 0.15.1 — 2026-11-09
 
 **Anonimiseren in opmerkingen** (LibreOffice Writer, extensie 0.13.1). Een opmerking gaat mee met het bestand, maar viel tot nu toe buiten het anonimiseren.
