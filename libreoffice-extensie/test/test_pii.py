@@ -64,6 +64,49 @@ if __name__ == "__main__":
     unittest.main()
 
 
+    def test_opmerkingen(self):
+        """Een opmerking gaat mee met het bestand: ook daar plaatshouders. Zonder bladwijzers (die kunnen daar niet)."""
+        doc = self.desktop.loadComponentFromURL("private:factory/swriter", "_blank", 0, (p("Hidden", True),))
+        try:
+            t = doc.getText()
+            t.setString("Advies van Ruud de Wit.")
+            opm = doc.createInstance("com.sun.star.text.textfield.Annotation")
+            opm.Author = "Fatima"
+            opm.Content = "Klopt dit? Ruud de Wit belde met dhr. Van der Meulen via 06-51209934. Ruud de Wit weet het."
+            c = t.createTextCursor()
+            c.gotoStart(False)
+            t.insertTextContent(c, opm, False)
+            nieuw = op.markeer(doc, [
+                {"van": "Ruud de Wit", "plaatshouder": "[PERSOON 1]", "ppl": 1, "voorvertoning": True},
+                {"van": "Van der Meulen", "plaatshouder": "[PERSOON 2]", "ppl": 1, "voorvertoning": True},
+            ])
+            # Eén keer in de tekst, twee keer in de opmerking; de naam die alleen in de opmerking staat ook.
+            self.assertEqual([x["plaatshouder"] for x in nieuw], ["[PERSOON 1]", "[PERSOON 1]", "[PERSOON 1]", "[PERSOON 2]"])
+            self.assertEqual(opm.Content, "Klopt dit? [PERSOON 1] belde met dhr. [PERSOON 2] via 06-51209934. [PERSOON 1] weet het.")
+            self.assertIn("[PERSOON 1]", t.getString())
+            plekken = op.lees_plekken(doc)
+            self.assertEqual(len(plekken), 4)
+            self.assertEqual(len({x["plek"] for x in plekken}), 4, "elke plek een eigen nummer")
+            self.assertTrue(all(x["voorvertoning"] for x in plekken))
+            # In het document staat nooit de originele waarde, ook niet in de eigenschap.
+            from oa_document import lees_eigenschap
+            self.assertNotIn("Meulen", lees_eigenschap(doc, op.OPM_EIGENSCHAP))
+            # Laat staan: de plek in de opmerking terug
+            p2 = next(x for x in plekken if x["plaatshouder"] == "[PERSOON 2]")
+            op.herstel(doc, [{"plek": p2["plek"], "waarde": "Van der Meulen"}])
+            self.assertIn("dhr. Van der Meulen via", opm.Content)
+            self.assertEqual(len(op.lees_plekken(doc)), 3)
+            op.toon(doc, plekken[1]["plek"])  # mag niet vastlopen
+            op.zet_definitief(doc)
+            self.assertFalse(any(x["voorvertoning"] for x in op.lees_plekken(doc)))
+            # Bij de bron vervangen (oude weg) raakt ook de opmerking
+            from oa_tekst import vervang_tekst
+            self.assertEqual(vervang_tekst(doc, [{"van": "06-51209934", "naar": "[TELEFOON 1]"}]), 1)
+            self.assertIn("via [TELEFOON 1].", opm.Content)
+        finally:
+            doc.close(True)
+
+
 class TestPiiBladen(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

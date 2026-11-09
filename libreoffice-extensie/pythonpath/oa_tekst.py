@@ -59,6 +59,27 @@ def _vervang_met_zoeken(doelen, paren):
     return aantal
 
 
+def _vervang_in_opmerkingen(document, paren):
+    """Zoeken en vervangen van LibreOffice slaat opmerkingen over; die apart."""
+    aantal = 0
+    try:
+        velden = document.getTextFields().createEnumeration()
+    except Exception:
+        return 0
+    while velden.hasMoreElements():
+        v = velden.nextElement()
+        if not v.supportsService("com.sun.star.text.textfield.Annotation"):
+            continue
+        tekst = v.Content or ""
+        nieuw = tekst
+        for van, naar in paren:
+            nieuw, n = re.subn(r"(?<!\w)" + re.escape(van) + r"(?!\w)", lambda _m, naar=naar: naar, nieuw)
+            aantal += n
+        if nieuw != tekst:
+            v.Content = nieuw
+    return aantal
+
+
 def _tekstvakken(vormen):
     for i in range(vormen.getCount()):
         v = vormen.getByIndex(i)
@@ -92,7 +113,7 @@ def vervang_tekst(document, paren):
         return 0
     soort = soort_van(document)
     if soort == "tekst":
-        return _vervang_met_zoeken([document], paren)
+        return _vervang_met_zoeken([document], paren) + _vervang_in_opmerkingen(document, paren)
     if soort == "rekenblad":
         bladen = document.getSheets()
         return _vervang_met_zoeken([bladen.getByIndex(i) for i in range(bladen.getCount())], paren)
@@ -116,7 +137,71 @@ def _tekst_van(sel):
     return ""
 
 
-def lees_selectie(document):
-    """De geselecteerde tekst; in Calc de geselecteerde cellen met tekst."""
-    tekst = _tekst_van(document.getCurrentController().getSelection())
+def lees_selectie(document, klembord=True, ctx=None):
+    """De geselecteerde tekst; in Calc de geselecteerde cellen met tekst.
+
+    Werkt de medewerker in een opmerking (Writer), dan geeft LibreOffice geen
+    selectie door (None). Dan kopieert de assistent de selectie even via het
+    klembord, en zet daarna terug wat er op het klembord stond."""
+    sel = document.getCurrentController().getSelection()
+    tekst = _tekst_van(sel)
+    if sel is None and klembord and soort_van(document) == "tekst":
+        tekst = _selectie_via_klembord(document, ctx)
     return re.sub(r"\s+", " ", tekst).strip()[:500]
+
+
+_KLEMBORD_TEKST = "text/plain;charset=utf-16"
+
+
+def _klembord_tekst(inhoud):
+    if inhoud is None:
+        return None
+    try:
+        for f in inhoud.getTransferDataFlavors():
+            if f.MimeType.startswith(_KLEMBORD_TEKST):
+                return inhoud.getTransferData(f)
+    except Exception:
+        return None
+    return None
+
+
+def _selectie_via_klembord(document, ctx=None):
+    """Kopieert de selectie (ook in een opmerking) en geeft de tekst; het klembord blijft zoals het was."""
+    import uno
+    import unohelper
+    from com.sun.star.datatransfer import XTransferable, DataFlavor
+
+    class Markering(unohelper.Base, XTransferable):
+        """Iets wat niemand kopieert: staat het er na Kopiëren nog, dan was er niets geselecteerd."""
+        WAARDE = "\u2063oa-geen-selectie\u2063"
+
+        def getTransferData(self, _f):
+            return self.WAARDE
+
+        def getTransferDataFlavors(self):
+            f = DataFlavor()
+            f.MimeType, f.HumanPresentableName = _KLEMBORD_TEKST, "Tekst"
+            f.DataType = uno.getTypeByName("string")
+            return (f,)
+
+        def isDataFlavorSupported(self, f):
+            return f.MimeType.startswith(_KLEMBORD_TEKST)
+
+    ctx = ctx or uno.getComponentContext()
+    smgr = ctx.ServiceManager
+    try:
+        kb = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
+        oud = kb.getContents()
+        kb.setContents(Markering(), None)
+        try:
+            helper = smgr.createInstanceWithContext("com.sun.star.frame.DispatchHelper", ctx)
+            helper.executeDispatch(document.getCurrentController().getFrame(), ".uno:Copy", "", 0, ())
+            tekst = _klembord_tekst(kb.getContents()) or ""
+        finally:
+            try:
+                kb.setContents(oud, None) if oud is not None else None
+            except Exception:
+                pass
+        return "" if Markering.WAARDE in tekst else tekst
+    except Exception:
+        return ""

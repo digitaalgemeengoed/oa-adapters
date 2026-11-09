@@ -12,11 +12,17 @@ De tekst krijgt de kleur van het niveau (art. 6 groen, art. 9 oranje,
 art. 10 rood); een voorvertoning heeft een gestippelde rand. Terugzetten:
 de bladwijzer weg, de tekst terug, de opmaak terug naar die van de alinea.
 
+Opmerkingen (annotaties) kunnen geen bladwijzers bevatten. Daar staat de
+plaatshouder als gewone tekst, en de plekken staan in de documenteigenschap
+"oa-pii-opmerkingen": plek, plaatshouder, voorvertoning en welke opmerking.
+Nooit de originele waarde: die staat alleen (versleuteld) in het register.
+
 Klikt de medewerker in een plaatshouder, dan onthoudt de selectieluisteraar
 welke; het paneel vraagt dat regelmatig op (/pii-klik). Het rechtermuismenu
 krijgt "Anonimiseer selectie (Assistent)".
 """
 import functools
+import json
 import re
 
 import uno
@@ -92,12 +98,93 @@ def _volgorde(a, b):
 
 def lees_plekken(document):
     gesorteerd = sorted(_bladwijzers(document), key=functools.cmp_to_key(_volgorde))
-    return [{"plek": m.group(1), "plaatshouder": m.group(2), "voorvertoning": bool(m.group(3))} for m, _ in gesorteerd]
+    uit = [{"plek": m.group(1), "plaatshouder": m.group(2), "voorvertoning": bool(m.group(3))} for m, _ in gesorteerd]
+    # Daarna de opmerkingen (ze staan naast de tekst).
+    uit += [{"plek": x["plek"], "plaatshouder": x["plaatshouder"], "voorvertoning": bool(x.get("v"))} for x in _opm_plekken(document)]
+    return uit
+
+
+# ---------------------------------------------------------------------------
+# Opmerkingen
+# ---------------------------------------------------------------------------
+
+OPM_EIGENSCHAP = "oa-pii-opmerkingen"
+
+
+def _opmerkingen(document):
+    """De opmerkingen in het document; elke opmerking krijgt zo nodig een naam om haar terug te vinden."""
+    uit = []
+    try:
+        velden = document.getTextFields().createEnumeration()
+    except Exception:
+        return uit
+    n = 0
+    while velden.hasMoreElements():
+        v = velden.nextElement()
+        if not v.supportsService("com.sun.star.text.textfield.Annotation"):
+            continue
+        n += 1
+        if not v.Name:
+            try:
+                v.Name = "oa-opmerking-%d" % n
+            except Exception:
+                pass
+        uit.append(v)
+    return uit
+
+
+def _opm_plekken(document):
+    from oa_document import lees_eigenschap
+    try:
+        return json.loads(lees_eigenschap(document, OPM_EIGENSCHAP) or "[]")
+    except Exception:
+        return []
+
+
+def _bewaar_opm_plekken(document, plekken):
+    from oa_document import schrijf_eigenschap
+    schrijf_eigenschap(document, OPM_EIGENSCHAP, json.dumps(plekken, ensure_ascii=False))
+
+
+def _markeer_in_opmerkingen(document, van, plaatshouder, voorvertoning, volg, nieuw):
+    patroon = re.compile(r"(?<!\w)" + re.escape(van) + r"(?!\w)")
+    plekken = _opm_plekken(document)
+    for opm in _opmerkingen(document):
+        tekst = opm.Content or ""
+        treffers = list(patroon.finditer(tekst))
+        if not treffers:
+            continue
+        for t in reversed(treffers):
+            tekst = tekst[: t.start()] + plaatshouder + tekst[t.end():]
+        opm.Content = tekst
+        for _t in treffers:
+            volg += 1
+            plek = "p%d" % volg
+            plekken.append({"plek": plek, "plaatshouder": plaatshouder, "v": bool(voorvertoning), "opm": opm.Name})
+            nieuw.append({"plek": plek, "plaatshouder": plaatshouder, "voorvertoning": bool(voorvertoning)})
+    _bewaar_opm_plekken(document, plekken)
+    return volg
+
+
+def _herstel_in_opmerking(document, p):
+    plekken = _opm_plekken(document)
+    rec = next((x for x in plekken if x["plek"] == p["plek"]), None)
+    if rec is None:
+        return False
+    opm = next((o for o in _opmerkingen(document) if o.Name == rec["opm"]), None)
+    if opm is not None:
+        tekst = opm.Content or ""
+        i = tekst.find(rec["plaatshouder"])
+        if i >= 0:
+            opm.Content = tekst[:i] + p["waarde"] + tekst[i + len(rec["plaatshouder"]):]
+    _bewaar_opm_plekken(document, [x for x in plekken if x["plek"] != p["plek"]])
+    return True
 
 
 def markeer(document, markeringen):
-    """Vervangt elke waarde (als heel woord, de langste eerst) door een gemarkeerde plaatshouder."""
-    volg = max([_plek_nummer(m) for m, _ in _bladwijzers(document)] or [0])
+    """Vervangt elke waarde (als heel woord, de langste eerst) door een gemarkeerde plaatshouder,
+    in de tekst en in de opmerkingen."""
+    volg = max([_plek_nummer(m) for m, _ in _bladwijzers(document)] + [int(x["plek"][1:]) for x in _opm_plekken(document)] + [0])
     nieuw = []
     gezien = set()
     for mk in sorted(markeringen, key=lambda x: -len(x.get("van", ""))):
@@ -124,6 +211,7 @@ def markeer(document, markeringen):
             bw.setName("%s%s %s%s" % (VOORVOEGSEL, plek, mk["plaatshouder"], " v" if mk.get("voorvertoning") else ""))
             tekst.insertTextContent(cursor, bw, True)
             nieuw.append({"plek": plek, "plaatshouder": mk["plaatshouder"], "voorvertoning": bool(mk.get("voorvertoning"))})
+        volg = _markeer_in_opmerkingen(document, van, mk["plaatshouder"], mk.get("voorvertoning"), volg, nieuw)
     return nieuw
 
 
@@ -150,6 +238,7 @@ def herstel(document, plekken):
     for p in plekken:
         _m, bw = _zoek(document, p["plek"])
         if bw is None:
+            _herstel_in_opmerking(document, p)
             continue
         a = bw.getAnchor()
         cursor = a.getText().createTextCursorByRange(a)
@@ -159,6 +248,9 @@ def herstel(document, plekken):
 
 
 def zet_definitief(document):
+    opm = _opm_plekken(document)
+    if any(x.get("v") for x in opm):
+        _bewaar_opm_plekken(document, [{**x, "v": False} for x in opm])
     for m, bw in _bladwijzers(document):
         if not m.group(3):
             continue
@@ -172,6 +264,12 @@ def toon(document, plek):
     _m, bw = _zoek(document, plek)
     if bw is not None:
         document.getCurrentController().select(bw.getAnchor())
+        return
+    # In een opmerking: de plek waar de opmerking aan hangt.
+    rec = next((x for x in _opm_plekken(document) if x["plek"] == plek), None)
+    opm = next((o for o in _opmerkingen(document) if rec and o.Name == rec["opm"]), None)
+    if opm is not None:
+        document.getCurrentController().select(opm.getAnchor())
 
 
 def plek_bij_cursor(document):
@@ -229,7 +327,8 @@ class Klikken(unohelper.Base, XSelectionChangeListener, XContextMenuInterceptor)
     def notifyContextMenuExecute(self, ev):
         try:
             from oa_tekst import lees_selectie
-            tekst = lees_selectie(self.document)
+            # Niet via het klembord: dit gebeurt bij elke klik met rechts.
+            tekst = lees_selectie(self.document, klembord=False)
             if not tekst.strip():
                 return IGNORED
             menu = ev.ActionTriggerContainer

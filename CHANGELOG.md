@@ -1,5 +1,13 @@
 # Wijzigingen
 
+## 0.15.1 — 2026-11-09
+
+**Anonimiseren in opmerkingen** (LibreOffice Writer, extensie 0.13.1). Een opmerking gaat mee met het bestand, maar viel tot nu toe buiten het anonimiseren.
+
+- *Anonimiseer selectie* werkt nu ook met tekst die je in een opmerking selecteert. LibreOffice geeft die selectie niet door; de extensie kopieert haar even via het klembord en zet daarna terug wat er op het klembord stond.
+- Plaatshouders komen ook in opmerkingen: elke waarde die de assistent vervangt, wordt ook in de opmerkingen vervangen. Daar kunnen geen bladwijzers; de plekken staan in de documenteigenschap `oa-pii-opmerkingen` (plek, plaatshouder, welke opmerking; nooit de originele waarde). Laat staan, bevestigen en tonen werken ook daar; klikken in een plaatshouder in een opmerking opent de kaart (nog) niet, en de plaatshouder heeft daar geen kleur.
+- Ook het vervangen bij de bron (de oudere weg) neemt opmerkingen mee.
+
 ## 0.15.0 — 2026-11-09
 
 **Toegankelijkheid van het bestand zelf** (met oa-services 0.5.0 en oa-wcag):
