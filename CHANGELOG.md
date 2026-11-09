@@ -1,5 +1,22 @@
 # Wijzigingen
 
+## 0.13.0 — 2026-11-09
+
+**Anonimiseren in het document in alle werkomgevingen.**
+
+| Werkomgeving | Plaatshouder | Klik naar de kaart | Selectie |
+|---|---|---|---|
+| Word | inhoudsbesturingselement (vergrendeld, kleur per niveau, labels) | ja (selectie-gebeurtenis) | lint en rechtermuismenu |
+| Excel | tekst in de cel | ja (geselecteerde cel) | lint en rechtermuismenu (ook op een cel) |
+| PowerPoint | tekst in het tekstvak, kleur per niveau, gestreepte onderstreping bij voorvertoning (PowerPointApi 1.4) | ja (geselecteerde vorm, 1.5) | lint en rechtermuismenu |
+| LibreOffice Calc | tekst in de cel, kleur per niveau, gestreepte onderstreping bij voorvertoning | ja | werkbalk en rechtermuismenu |
+| LibreOffice Impress | tekst in het tekstvak, idem | ja | werkbalk en rechtermuismenu |
+| Collabora | zoeken en vervangen van Collabora; plekken uit het opgeslagen bestand | nee | tekst invoeren in het paneel |
+
+In rekenbladen en presentaties is de plaatshouder de tekst `[SOORT n]` zelf; de plek is het vak plus het hoeveelste voorkomen. Collabora zet een plaatshouder altijd op alle plekken tegelijk terug.
+
+LibreOffice-extensie 0.11.0 (Calc en Impress). Getest tegen een echte LibreOffice (zonder scherm) met het paneel in de browser, voor Writer en Calc. Word, Excel en PowerPoint: alleen tegen een nagebootst Office.js; Collabora tegen een nagebootst Collabora.
+
 ## 0.12.0 — 2026-11-09
 
 **LibreOffice Writer: anonimiseren in het document** (extensie 0.10.0).

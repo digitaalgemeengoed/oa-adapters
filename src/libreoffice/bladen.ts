@@ -1,4 +1,4 @@
-import { BASISVERMOGENS, type Adapter, type Afdruk, type Inhoud, type Melding, type Plek, type Werkomgeving } from "@digitaalgemeengoed/oa-contract";
+import { BASISVERMOGENS, type Adapter, type Afdruk, type Inhoud, type Melding, type Plek, type Vermogen, type Werkomgeving } from "@digitaalgemeengoed/oa-contract";
 import type { LibreOfficeTekstverwerker } from "./tekstverwerker.js";
 
 const AFDRUK = "oa-afdruk";
@@ -20,7 +20,9 @@ export class LibreOfficeBladenAdapter implements Adapter {
 
   werkomgeving(): Werkomgeving {
     const [id, naam] = NAMEN[this.soort];
-    return { id, naam, vermogens: [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven", "bestand-opleveren", "tekst-vervangen", "selectie-lezen"] };
+    const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven", "bestand-opleveren", "tekst-vervangen", "selectie-lezen", "eigenschap-schrijven"];
+    if (this.markeerPii) vermogens.push("pii-markeren", "pii-klik");
+    return { id, naam, vermogens };
   }
 
   async leverInhoud(): Promise<Inhoud> {
@@ -42,6 +44,28 @@ export class LibreOfficeBladenAdapter implements Adapter {
   leverBestand = (): Promise<Inhoud> => this.brug.leesBestand();
   vervangTekst = (paren: { van: string; naar: string }[]): Promise<number> => this.brug.vervangTekst(paren);
   leesSelectie = (): Promise<string> => this.brug.leesSelectie();
+  schrijfDocumenteigenschap = (naam: string, waarde: string): Promise<void> => this.brug.schrijfDocumenteigenschap(naam, waarde);
+
+  // Anonimiseren in het document: de plaatshouder staat in de cel of het tekstvak (oa_pii.py).
+  // Ontbreekt als de extensie te oud is (zie libreoffice/main.ts).
+  get markeerPii(): Adapter["markeerPii"] {
+    return this.brug.markeerPii ? (m) => this.brug.markeerPii(m) : undefined;
+  }
+  get leesPiiPlekken(): Adapter["leesPiiPlekken"] {
+    return this.brug.leesPiiPlekken ? () => this.brug.leesPiiPlekken() : undefined;
+  }
+  get herstelPii(): Adapter["herstelPii"] {
+    return this.brug.herstelPii ? (p) => this.brug.herstelPii(p) : undefined;
+  }
+  get zetPiiDefinitief(): Adapter["zetPiiDefinitief"] {
+    return this.brug.zetPiiDefinitief ? () => this.brug.zetPiiDefinitief() : undefined;
+  }
+  get toonPiiPlek(): Adapter["toonPiiPlek"] {
+    return this.brug.toonPiiPlek ? (p) => this.brug.toonPiiPlek(p) : undefined;
+  }
+  get bijPiiKlik(): Adapter["bijPiiKlik"] {
+    return this.brug.bijPiiKlik ? (t) => this.brug.bijPiiKlik(t) : undefined;
+  }
 
   toon(melding: Melding): void {
     this.melden(melding);

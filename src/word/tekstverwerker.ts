@@ -1,5 +1,6 @@
 /// <reference types="office-js" />
-import type { Inhoud } from "@digitaalgemeengoed/oa-contract";
+import type { Inhoud, PiiMarkering, PiiPlek } from "@digitaalgemeengoed/oa-contract";
+import { PII_KLEUR } from "../tekstvervangen.js";
 import type { Tekstverwerker } from "../structuur-adapter.js";
 import { groepeer, niveauUitStijl, type Blok, type Doel, type Inline, type Opdracht, type RuweAlinea, type Tabel } from "../semantisch.js";
 
@@ -219,6 +220,122 @@ export class WordTekstverwerker implements Tekstverwerker {
       await ctx.sync();
       return sel.text;
     });
+  }
+
+  // --- Anonimiseren in het document -------------------------------------
+  // Elke plaatshouder staat in een inhoudsbesturingselement (content control)
+  // met de tag "oa-pii p12 [PERSOON 1] v" (v = voorvertoning), de kleur van
+  // het niveau en vergrendelde inhoud. De labels tonen de plaatshouder.
+
+  private static readonly TAG = /^oa-pii (p\d+) (\[[^\]]+\])( v)?$/;
+
+  private static plek(tag: string): PiiPlek | null {
+    const m = WordTekstverwerker.TAG.exec(tag ?? "");
+    return m ? { plek: m[1]!, plaatshouder: m[2]!, voorvertoning: !!m[3] } : null;
+  }
+
+  async markeerPii(markeringen: PiiMarkering[]): Promise<PiiPlek[]> {
+    return Word.run(async (ctx) => {
+      const bestaand = ctx.document.body.contentControls;
+      bestaand.load("items/tag");
+      await ctx.sync();
+      let volg = Math.max(0, ...bestaand.items.map((c) => Number(WordTekstverwerker.plek(c.tag)?.plek.slice(1) ?? 0)));
+      const nieuw: PiiPlek[] = [];
+      for (const m of [...markeringen].filter((x) => x.van.trim() && x.van.length <= 255).sort((a, b) => b.van.length - a.van.length)) {
+        const vondsten = ctx.document.body.search(m.van.replace(/\^/g, "^^"), { matchCase: true, matchWholeWord: true });
+        vondsten.load("items");
+        await ctx.sync();
+        const ouders = vondsten.items.map((r) => {
+          const o = r.parentContentControlOrNullObject;
+          o.load("tag");
+          return o;
+        });
+        await ctx.sync();
+        vondsten.items.forEach((r, i) => {
+          const o = ouders[i]!;
+          if (!o.isNullObject && WordTekstverwerker.plek(o.tag)) return; // al een plaatshouder
+          const plek = `p${++volg}`;
+          const bereik = r.insertText(m.plaatshouder, "Replace");
+          const cc = bereik.insertContentControl();
+          cc.tag = `oa-pii ${plek} ${m.plaatshouder}${m.voorvertoning ? " v" : ""}`;
+          cc.title = m.voorvertoning ? `${m.plaatshouder} · voorvertoning` : m.plaatshouder;
+          cc.appearance = "Tags";
+          cc.color = PII_KLEUR[m.ppl] ?? PII_KLEUR[1]!;
+          cc.cannotEdit = true;
+          nieuw.push({ plek, plaatshouder: m.plaatshouder, voorvertoning: m.voorvertoning });
+        });
+        await ctx.sync();
+      }
+      return nieuw;
+    });
+  }
+
+  private async plekken(ctx: Word.RequestContext): Promise<{ cc: Word.ContentControl; p: PiiPlek }[]> {
+    const ccs = ctx.document.body.contentControls;
+    ccs.load("items/tag");
+    await ctx.sync();
+    return ccs.items.flatMap((cc) => {
+      const p = WordTekstverwerker.plek(cc.tag);
+      return p ? [{ cc, p }] : [];
+    });
+  }
+
+  async leesPiiPlekken(): Promise<PiiPlek[]> {
+    return Word.run(async (ctx) => (await this.plekken(ctx)).map((x) => x.p));
+  }
+
+  async herstelPii(plekken: { plek: string; waarde: string }[]): Promise<void> {
+    await Word.run(async (ctx) => {
+      const alle = await this.plekken(ctx);
+      for (const { plek, waarde } of plekken) {
+        const x = alle.find((a) => a.p.plek === plek);
+        if (!x) continue;
+        x.cc.cannotEdit = false;
+        x.cc.insertText(waarde, "Replace");
+        x.cc.delete(true); // het element weg, de tekst blijft
+      }
+      await ctx.sync();
+    });
+  }
+
+  async zetPiiDefinitief(): Promise<void> {
+    await Word.run(async (ctx) => {
+      for (const { cc, p } of await this.plekken(ctx)) {
+        if (!p.voorvertoning) continue;
+        cc.tag = `oa-pii ${p.plek} ${p.plaatshouder}`;
+        cc.title = p.plaatshouder;
+      }
+      await ctx.sync();
+    });
+  }
+
+  toonPiiPlek(plek: string): void {
+    Word.run(async (ctx) => {
+      (await this.plekken(ctx)).find((x) => x.p.plek === plek)?.cc.select();
+      await ctx.sync();
+    }).catch(() => undefined);
+  }
+
+  /** Klik in een plaatshouder: de selectie verandert en staat in een van onze elementen. */
+  bijPiiKlik(terugroep: (p: PiiPlek) => void): () => void {
+    let laatste = "";
+    const bij = () => {
+      Word.run(async (ctx) => {
+        const o = ctx.document.getSelection().parentContentControlOrNullObject;
+        o.load("tag");
+        await ctx.sync();
+        const p = o.isNullObject ? null : WordTekstverwerker.plek(o.tag);
+        if (p && p.plek !== laatste) terugroep(p);
+        laatste = p?.plek ?? "";
+      }).catch(() => undefined);
+    };
+    Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, bij);
+    return () => Office.context.document.removeHandlerAsync(Office.EventType.DocumentSelectionChanged, { handler: bij });
+  }
+
+  /** Een eigen documenteigenschap (Bestand → Info → Eigenschappen → Geavanceerd). */
+  schrijfDocumenteigenschap(naam: string, waarde: string): Promise<void> {
+    return this.schrijfEigenschap(naam, waarde);
   }
 
   async leesEigenschap(naam: string): Promise<string | null> {

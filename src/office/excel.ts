@@ -1,6 +1,7 @@
 /// <reference types="office-js" />
 import { BASISVERMOGENS, type Adapter, type Afdruk, type Inhoud, type Melding, type Plek, type Vermogen, type Werkomgeving } from "@digitaalgemeengoed/oa-contract";
-import { schoonSelectie, vervangInTekst, type Paar } from "../tekstvervangen.js";
+import { plaatshoudersIn, schoonSelectie, vervangInTekst, vondstenVoorMarkeren, type Paar } from "../tekstvervangen.js";
+import type { PiiMarkering, PiiPlek } from "@digitaalgemeengoed/oa-contract";
 import { eersteElement, esc, HANDMATIG, img, leesAfdrukUitBestand, leesOfficeBestand, NIET_GEVONDEN, padDelen, schrijfAfdrukInBestand } from "./gedeeld.js";
 
 const MAX_RIJEN = 200;
@@ -22,11 +23,14 @@ export class ExcelAdapter implements Adapter {
   private kaart: Onderdeel[][] = [];
   private bladIds: string[] = [];
   private readonly vormen = Office.context.requirements.isSetSupported("ExcelApi", "1.9");
+  /** Eigen documenteigenschappen (ExcelApi 1.7). */
+  private readonly eigenschappen = Office.context.requirements.isSetSupported("ExcelApi", "1.7");
 
   constructor(private readonly melden: (m: Melding) => void) {}
 
   werkomgeving(): Werkomgeving {
-    const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven", "bestand-opleveren", "tekst-vervangen", "selectie-lezen"];
+    const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "plek-tonen", "afdruk-schrijven", "bestand-opleveren", "tekst-vervangen", "selectie-lezen", "pii-markeren", "pii-klik"];
+    if (this.eigenschappen) vermogens.push("eigenschap-schrijven");
     return { id: "excel", naam: "Microsoft Excel", vermogens };
   }
 
@@ -157,6 +161,123 @@ export class ExcelAdapter implements Adapter {
     this.kaart = [];
     return aantal;
   };
+
+  // --- Anonimiseren in het document -------------------------------------
+  // De plaatshouder staat als tekst in de cel ([PERSOON 1]); de plek is
+  // blad, rij, kolom en het hoeveelste voorkomen (s1!r4c2#0). Een deel van
+  // een cel kan Office.js niet opmaken; of het een voorvertoning is, weet
+  // het register.
+
+  /** Alle cellen met vaste tekst, per blad. */
+  private async cellen(ctx: Excel.RequestContext) {
+    const bladen = ctx.workbook.worksheets;
+    bladen.load("items/id");
+    await ctx.sync();
+    const per = bladen.items.map((b) => {
+      const r = b.getUsedRangeOrNullObject(true);
+      r.load("formulas,rowIndex,columnIndex");
+      return { b, r };
+    });
+    await ctx.sync();
+    const uit: { b: Excel.Worksheet; rij: number; kolom: number; tekst: string; kenmerk: string }[] = [];
+    for (const { b, r } of per) {
+      if (r.isNullObject) continue;
+      r.formulas.forEach((rij, i) =>
+        rij.forEach((cel, j) => {
+          if (typeof cel !== "string" || cel.startsWith("=") || !cel) return;
+          const rr = r.rowIndex + i;
+          const kk = r.columnIndex + j;
+          uit.push({ b, rij: rr, kolom: kk, tekst: cel, kenmerk: `${b.id}!r${rr}c${kk}` });
+        }),
+      );
+    }
+    return uit;
+  }
+
+  markeerPii = async (markeringen: PiiMarkering[]): Promise<PiiPlek[]> => {
+    const voor = new Set((await this.leesPiiPlekken()).map((p) => p.plek));
+    await Excel.run(async (ctx) => {
+      for (const c of await this.cellen(ctx)) {
+        const v = vondstenVoorMarkeren(c.tekst, markeringen);
+        if (!v.length) continue;
+        let t = c.tekst;
+        for (const x of v) t = t.slice(0, x.begin) + x.m.plaatshouder + t.slice(x.eind);
+        c.b.getCell(c.rij, c.kolom).values = [[t]];
+      }
+      await ctx.sync();
+    });
+    this.kaart = [];
+    return (await this.leesPiiPlekken()).filter((p) => !voor.has(p.plek));
+  };
+
+  leesPiiPlekken = async (): Promise<PiiPlek[]> =>
+    Excel.run(async (ctx) =>
+      (await this.cellen(ctx)).flatMap((c) => plaatshoudersIn(c.tekst).map((p, i) => ({ plek: `${c.kenmerk}#${i}`, plaatshouder: p.plaatshouder, voorvertoning: false }))),
+    );
+
+  herstelPii = async (plekken: { plek: string; waarde: string }[]): Promise<void> => {
+    await Excel.run(async (ctx) => {
+      const cellen = await this.cellen(ctx);
+      const per = new Map<string, { n: number; waarde: string }[]>();
+      for (const { plek, waarde } of plekken) {
+        const [kenmerk, n] = plek.split("#");
+        per.set(kenmerk!, [...(per.get(kenmerk!) ?? []), { n: Number(n), waarde }]);
+      }
+      for (const [kenmerk, wat] of per) {
+        const c = cellen.find((x) => x.kenmerk === kenmerk);
+        if (!c) continue;
+        const ph = plaatshoudersIn(c.tekst);
+        let t = c.tekst;
+        for (const { n, waarde } of wat.sort((a, b) => b.n - a.n)) {
+          const p = ph[n];
+          if (p) t = t.slice(0, p.begin) + waarde + t.slice(p.eind);
+        }
+        c.b.getCell(c.rij, c.kolom).values = [[t]];
+      }
+      await ctx.sync();
+    });
+    this.kaart = [];
+  };
+
+  toonPiiPlek = (plek: string): void => {
+    const m = /^(.+)!r(\d+)c(\d+)#/.exec(plek);
+    if (!m) return;
+    Excel.run(async (ctx) => {
+      const b = ctx.workbook.worksheets.getItem(m[1]!);
+      b.activate();
+      b.getCell(Number(m[2]), Number(m[3])).select();
+      await ctx.sync();
+    }).catch(() => undefined);
+  };
+
+  bijPiiKlik = (terugroep: (p: PiiPlek) => void): (() => void) => {
+    let laatste = "";
+    const bij = () => {
+      Excel.run(async (ctx) => {
+        const r = ctx.workbook.getSelectedRange();
+        r.load("values,rowIndex,columnIndex,cellCount");
+        const b = r.worksheet;
+        b.load("id");
+        await ctx.sync();
+        const tekst = r.cellCount === 1 && typeof r.values[0]?.[0] === "string" ? (r.values[0]![0] as string) : "";
+        const p = plaatshoudersIn(tekst)[0];
+        const plek = p ? `${b.id}!r${r.rowIndex}c${r.columnIndex}#0` : "";
+        if (p && plek !== laatste) terugroep({ plek, plaatshouder: p.plaatshouder, voorvertoning: false });
+        laatste = plek;
+      }).catch(() => undefined);
+    };
+    Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, bij);
+    return () => Office.context.document.removeHandlerAsync(Office.EventType.DocumentSelectionChanged, { handler: bij });
+  };
+
+  get schrijfDocumenteigenschap(): ((naam: string, waarde: string) => Promise<void>) | undefined {
+    if (!this.eigenschappen) return undefined;
+    return async (naam, waarde) =>
+      Excel.run(async (ctx) => {
+        ctx.workbook.properties.custom.add(naam, waarde.slice(0, 255));
+        await ctx.sync();
+      });
+  }
 
   /** Excel geeft geen deel van een cel als selectie; de geselecteerde cellen met tekst. */
   leesSelectie = async (): Promise<string> =>

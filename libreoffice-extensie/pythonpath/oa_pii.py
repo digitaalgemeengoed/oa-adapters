@@ -197,7 +197,9 @@ class Klikken(unohelper.Base, XSelectionChangeListener, XContextMenuInterceptor)
     """Luistert naar de selectie (klik in een plaatshouder) en vult het rechtermuismenu aan."""
 
     def __init__(self, document):
+        from oa_bladen import soort_van
         self.document = document
+        self.tekst = soort_van(document) == "tekst"
         self.laatste = None
         self.teller = 0
         c = document.getCurrentController()
@@ -210,7 +212,7 @@ class Klikken(unohelper.Base, XSelectionChangeListener, XContextMenuInterceptor)
     # XSelectionChangeListener
     def selectionChanged(self, _ev):
         try:
-            p = plek_bij_cursor(self.document)
+            p = plek_bij_cursor(self.document) if self.tekst else plek_bij_selectie(self.document)
         except Exception:
             p = None
         plek = p["plek"] if p else None
@@ -226,8 +228,8 @@ class Klikken(unohelper.Base, XSelectionChangeListener, XContextMenuInterceptor)
     # XContextMenuInterceptor
     def notifyContextMenuExecute(self, ev):
         try:
-            sel = self.document.getCurrentController().getSelection()
-            tekst = sel.getByIndex(0).getString() if sel and hasattr(sel, "getByIndex") and sel.getCount() else ""
+            from oa_tekst import lees_selectie
+            tekst = lees_selectie(self.document)
             if not tekst.strip():
                 return IGNORED
             menu = ev.ActionTriggerContainer
@@ -243,3 +245,151 @@ class Klikken(unohelper.Base, XSelectionChangeListener, XContextMenuInterceptor)
 
     def stand(self):
         return {"n": self.teller, **(self.laatste or {})}
+
+
+# ---------------------------------------------------------------------------
+# Calc en Impress. Daar zijn geen bladwijzers: een plaatshouder is de tekst
+# [SOORT n] zelf, in een cel of tekstvak. De plek is het vak plus het hoeveelste
+# voorkomen erin (s0c2r5#0, d1s3#0). Of het nog een voorvertoning is, weet het
+# register; in het document is dat een gestippelde onderstreping.
+# ---------------------------------------------------------------------------
+
+PLAATSHOUDER = re.compile(r"\[[A-Z][A-Z-]* \d+\]")
+STIPPEL = 5  # com.sun.star.awt.FontUnderline.DASH
+
+
+def _vakken(document):
+    """(kenmerk, vak met tekst) voor elke cel met tekst of elk tekstvak."""
+    from oa_bladen import soort_van
+    if soort_van(document) == "rekenblad":
+        from com.sun.star.sheet.CellFlags import STRING
+        bladen = document.getSheets()
+        for i in range(bladen.getCount()):
+            reeksen = bladen.getByIndex(i).queryContentCells(STRING)
+            cellen = reeksen.getCells().createEnumeration()
+            gevonden = []
+            while cellen.hasMoreElements():
+                cel = cellen.nextElement()
+                a = cel.getCellAddress()
+                gevonden.append(((a.Row, a.Column), "s%dc%dr%d" % (a.Sheet, a.Column, a.Row), cel))
+            for _k, kenmerk, cel in sorted(gevonden, key=lambda x: x[0]):
+                yield kenmerk, cel
+    else:
+        from oa_tekst import _tekstvakken
+        paginas = document.getDrawPages()
+        for i in range(paginas.getCount()):
+            for j, vak in enumerate(_tekstvakken(paginas.getByIndex(i))):
+                yield "d%ds%d" % (i, j), vak
+
+
+def _vak(document, kenmerk):
+    for k, v in _vakken(document):
+        if k == kenmerk:
+            return v
+    return None
+
+
+def _cursor(vak, begin, lengte):
+    c = vak.createTextCursor()
+    c.gotoStart(False)
+    c.goRight(begin, False)
+    c.goRight(lengte, True)
+    return c
+
+
+def lees_plekken_bladen(document):
+    uit = []
+    for kenmerk, vak in _vakken(document):
+        for i, m in enumerate(PLAATSHOUDER.finditer(vak.getString())):
+            uit.append({"plek": "%s#%d" % (kenmerk, i), "plaatshouder": m.group(0), "voorvertoning": False})
+    return uit
+
+
+def markeer_bladen(document, markeringen):
+    voor = {p["plek"] for p in lees_plekken_bladen(document)}
+    geordend = sorted([m for m in markeringen if m.get("van", "").strip()], key=lambda x: -len(x["van"]))
+    for _kenmerk, vak in _vakken(document):
+        tekst = vak.getString()
+        bezet = [m.span() for m in PLAATSHOUDER.finditer(tekst)]
+        nieuw = []
+        for mk in geordend:
+            for m in re.finditer(r"(?<!\w)" + re.escape(mk["van"]) + r"(?!\w)", tekst):
+                b, e = m.span()
+                if not any(b < x[1] and e > x[0] for x in bezet):
+                    bezet.append((b, e))
+                    nieuw.append((b, e, mk))
+        for b, e, mk in sorted(nieuw, key=lambda x: -x[0]):
+            c = _cursor(vak, b, e - b)
+            c.setString(mk["plaatshouder"])
+            c.CharColor = KLEUR.get(int(mk.get("ppl", 1)), KLEUR[1])
+            c.CharUnderline = STIPPEL if mk.get("voorvertoning") else 0
+    return [p for p in lees_plekken_bladen(document) if p["plek"] not in voor]
+
+
+def _splits(plek):
+    kenmerk, _, n = plek.rpartition("#")
+    return kenmerk, int(n or 0)
+
+
+def herstel_bladen(document, plekken):
+    # Per vak van achter naar voren, zodat de nummering van de andere plekken klopt.
+    for p in sorted(plekken, key=lambda x: (_splits(x["plek"])[0], -_splits(x["plek"])[1])):
+        kenmerk, n = _splits(p["plek"])
+        vak = _vak(document, kenmerk)
+        if vak is None:
+            continue
+        treffers = list(PLAATSHOUDER.finditer(vak.getString()))
+        if n >= len(treffers):
+            continue
+        b, e = treffers[n].span()
+        c = _cursor(vak, b, e - b)
+        c.setString(p["waarde"])
+        for naam in ("CharColor", "CharUnderline"):
+            try:
+                c.setPropertyToDefault(naam)
+            except Exception:
+                pass
+
+
+def zet_definitief_bladen(document):
+    for _kenmerk, vak in _vakken(document):
+        for m in PLAATSHOUDER.finditer(vak.getString()):
+            b, e = m.span()
+            _cursor(vak, b, e - b).CharUnderline = 0
+
+
+def toon_bladen(document, plek):
+    from oa_bladen import soort_van
+    vak = _vak(document, _splits(plek)[0])
+    if vak is None:
+        return
+    c = document.getCurrentController()
+    if soort_van(document) == "presentatie":
+        kenmerk = _splits(plek)[0]
+        c.setCurrentPage(document.getDrawPages().getByIndex(int(kenmerk[1:kenmerk.index("s")])))
+    c.select(vak)
+
+
+def plek_bij_selectie(document):
+    """De eerste plaatshouder in de geselecteerde cel of het geselecteerde tekstvak."""
+    sel = document.getCurrentController().getSelection()
+    if sel is None:
+        return None
+    kandidaten = []
+    if hasattr(sel, "getCellAddress"):
+        kandidaten = [sel]
+    elif hasattr(sel, "getCount") and hasattr(sel, "getByIndex") and not hasattr(sel, "getRangeAddress"):
+        kandidaten = [sel.getByIndex(i) for i in range(sel.getCount())]
+    for kenmerk, vak in _vakken(document):
+        for k in kandidaten:
+            try:
+                zelfde = (k == vak) or (hasattr(k, "getCellAddress") and hasattr(vak, "getCellAddress")
+                                         and (k.getCellAddress().Sheet, k.getCellAddress().Column, k.getCellAddress().Row)
+                                         == (vak.getCellAddress().Sheet, vak.getCellAddress().Column, vak.getCellAddress().Row))
+            except Exception:
+                zelfde = False
+            if zelfde:
+                m = PLAATSHOUDER.search(vak.getString())
+                if m:
+                    return {"plek": "%s#0" % kenmerk, "plaatshouder": m.group(0), "voorvertoning": False}
+    return None

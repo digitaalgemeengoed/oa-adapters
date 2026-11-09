@@ -24,6 +24,7 @@ function pptVorm(v: Vorm) {
     font: {},
     getSubstring: (start: number, lengte: number) => ({
       set text(t: string) { v.tekst = (v.tekst ?? "").slice(0, start) + t + (v.tekst ?? "").slice(start + lengte); },
+      font: {},
     }),
   };
   return Object.assign(v, {
@@ -189,4 +190,35 @@ test("Excel: tekst vervangen in cellen met vaste tekst, niet in formules", async
   assert.deepEqual(bladen[1]!.waarden, [["Aanvrager: [PERSOON 1]", "=CONCAT(\"Jan\")", 7], ["Janssen", "[PERSOON 2]", null]]);
   assert.equal(await a.leesSelectie(), "Jan de Vries Utrecht");
   bladen[1]!.waarden = null;
+});
+
+test("Excel: plaatshouders in cellen markeren, lezen, per plek terugzetten", async () => {
+  const a = new ExcelAdapter(() => undefined);
+  bladen[1]!.waarden = [["Aanvrager: Jan de Vries, en Jan", "=CONCAT(\"Jan\")"], ["Janssen", null]];
+  const nieuw = await a.markeerPii([
+    { van: "Jan", plaatshouder: "[PERSOON 2]", ppl: 1, voorvertoning: true },
+    { van: "Jan de Vries", plaatshouder: "[PERSOON 1]", ppl: 1, voorvertoning: true },
+  ]);
+  assert.deepEqual(nieuw.map((p) => [p.plek, p.plaatshouder]), [["s2!r0c0#0", "[PERSOON 1]"], ["s2!r0c0#1", "[PERSOON 2]"]]);
+  assert.equal(bladen[1]!.waarden![0]![0], "Aanvrager: [PERSOON 1], en [PERSOON 2]");
+  assert.equal(bladen[1]!.waarden![0]![1], "=CONCAT(\"Jan\")");
+  await a.herstelPii([{ plek: "s2!r0c0#1", waarde: "Jan" }]);
+  assert.equal(bladen[1]!.waarden![0]![0], "Aanvrager: [PERSOON 1], en Jan");
+  assert.deepEqual((await a.leesPiiPlekken()).map((p) => p.plaatshouder), ["[PERSOON 1]"]);
+  assert.ok(a.werkomgeving().vermogens.includes("pii-markeren"));
+  bladen[1]!.waarden = null;
+});
+
+test("PowerPoint: plaatshouders in tekstvakken markeren en terugzetten", async () => {
+  const a = new PowerPointAdapter(() => undefined);
+  dias[0]!.vormen.push({ id: "pii", name: "TextBox 9", type: "TextBox", tekst: "Jan de Vries\rJan belt" });
+  const nieuw = await a.markeerPii!([
+    { van: "Jan", plaatshouder: "[PERSOON 2]", ppl: 1, voorvertoning: true },
+    { van: "Jan de Vries", plaatshouder: "[PERSOON 1]", ppl: 1, voorvertoning: true },
+  ]);
+  assert.deepEqual(nieuw.map((p) => [p.plek, p.plaatshouder]), [["d1/pii#0", "[PERSOON 1]"], ["d1/pii#1", "[PERSOON 2]"]]);
+  assert.equal(dias[0]!.vormen.find((v) => v.id === "pii")!.tekst, "[PERSOON 1]\r[PERSOON 2] belt");
+  await a.herstelPii!([{ plek: "d1/pii#1", waarde: "Jan" }]);
+  assert.equal(dias[0]!.vormen.find((v) => v.id === "pii")!.tekst, "[PERSOON 1]\rJan belt");
+  dias[0]!.vormen.pop();
 });

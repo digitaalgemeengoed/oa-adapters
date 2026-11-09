@@ -54,8 +54,8 @@ function koppelKnoppen() {
     await (zichtbaar ? Office.addin.hide() : Office.addin.showAsTaskpane()).catch(() => undefined);
     klaar(e);
   });
-  for (const o of ["ovz", "ond", "meta", "toeg", "anon", "clas", "waar", "flow", "beoordelen"] as Opdracht[]) {
-    Office.actions.associate(`oa_${o}`, async (e: Office.AddinCommands.Event) => {
+  for (const o of ["ovz", "ond", "meta", "toeg", "anon", "clas", "waar", "flow", "beoordelen", "anon-selectie"] as Opdracht[]) {
+    Office.actions.associate(`oa_${o.replace(/-/g, "_")}`, async (e: Office.AddinCommands.Event) => {
       await Office.addin.showAsTaskpane().catch(() => undefined);
       if (geplaatst) stuurOpdracht(o);
       else gewenst = o;

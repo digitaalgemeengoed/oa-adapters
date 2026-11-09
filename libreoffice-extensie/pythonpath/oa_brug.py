@@ -100,8 +100,7 @@ class Brug:
         # Klikken in plaatshouders en het rechtermuismenu (Writer). De brug ontstaat op de hoofdthread.
         self.klikken = None
         try:
-            if ob.soort_van(document) == "tekst":
-                self.klikken = op.Klikken(document)
+            self.klikken = op.Klikken(document)
         except Exception:
             traceback.print_exc()
         brug = self
@@ -229,23 +228,23 @@ class Brug:
         if methode == "GET" and pad == "/pii/klik":
             # Vaak gevraagd (elke 0,7 s): alleen de eerste keer via de hoofdthread.
             if self.klikken is None:
-                self.klikken = h(lambda: op.Klikken(doc) if ob.soort_van(doc) == "tekst" else False)
+                self.klikken = h(lambda: op.Klikken(doc))
             return self.klikken.stand() if self.klikken else {"n": 0}
         if pad.startswith("/pii"):
-            if h(lambda: ob.soort_van(doc)) != "tekst":
-                raise NietUitvoerbaar("Plaatshouders in het document kan de assistent (nog) alleen in Writer.")
+            # Writer: bladwijzers; Calc en Impress: de plaatshouder in de cel of het tekstvak.
+            w = h(lambda: ob.soort_van(doc)) == "tekst"
             if methode == "POST" and pad == "/pii/markeer":
-                return {"plekken": h(lambda: op.markeer(doc, lichaam["markeringen"]))}
+                return {"plekken": h(lambda: (op.markeer if w else op.markeer_bladen)(doc, lichaam["markeringen"]))}
             if methode == "GET" and pad == "/pii/plekken":
-                return {"plekken": h(lambda: op.lees_plekken(doc))}
+                return {"plekken": h(lambda: (op.lees_plekken if w else op.lees_plekken_bladen)(doc))}
             if methode == "POST" and pad == "/pii/herstel":
-                h(lambda: op.herstel(doc, lichaam["plekken"]))
+                h(lambda: (op.herstel if w else op.herstel_bladen)(doc, lichaam["plekken"]))
                 return {}
             if methode == "POST" and pad == "/pii/definitief":
-                h(lambda: op.zet_definitief(doc))
+                h(lambda: (op.zet_definitief if w else op.zet_definitief_bladen)(doc))
                 return {}
             if methode == "POST" and pad == "/pii/toon":
-                h(lambda: op.toon(doc, lichaam["plek"]))
+                h(lambda: (op.toon if w else op.toon_bladen)(doc, lichaam["plek"]))
                 return {}
         if pad == "/eigenschap":
             if methode == "GET":

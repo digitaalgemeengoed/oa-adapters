@@ -68,3 +68,34 @@ export function telInHtml(html: string, paren: Paar[]): number {
     .replace(/&amp;/g, "&");
   return vervangInTekst(tekst, paren).aantal;
 }
+
+/** Een plaatshouder in de tekst, zoals [PERSOON 1] of [E-MAIL 2]. */
+export const PLAATSHOUDER = /\[[A-Z][A-Z-]* \d+\]/g;
+
+/** De plaatshouders in een stuk tekst, met hun positie. */
+export function plaatshoudersIn(tekst: string): { plaatshouder: string; begin: number; eind: number }[] {
+  return [...tekst.matchAll(PLAATSHOUDER)].map((m) => ({ plaatshouder: m[0], begin: m.index!, eind: m.index! + m[0].length }));
+}
+
+/**
+ * Waar in de tekst de waarden (als heel woord, de langste eerst) staan, zonder
+ * overlap en niet in een plaatshouder die er al staat. Van achter naar voren
+ * gesorteerd, zodat vervangen de posities van de rest niet verschuift.
+ */
+export function vondstenVoorMarkeren<T extends { van: string }>(tekst: string, markeringen: T[]): { begin: number; eind: number; m: T }[] {
+  const bezet = plaatshoudersIn(tekst).map((p) => [p.begin, p.eind] as const);
+  const uit: { begin: number; eind: number; m: T }[] = [];
+  for (const m of [...markeringen].filter((x) => x.van.trim()).sort((a, b) => b.van.length - a.van.length)) {
+    for (const v of tekst.matchAll(heelWoord(m.van))) {
+      const begin = v.index!;
+      const eind = begin + v[0].length;
+      if (bezet.some(([b, e]) => begin < e && eind > b)) continue;
+      bezet.push([begin, eind]);
+      uit.push({ begin, eind, m });
+    }
+  }
+  return uit.sort((a, b) => b.begin - a.begin);
+}
+
+/** Kleur van een plaatshouder per niveau (zoals de demo). */
+export const PII_KLEUR: Record<number, string> = { 1: "#1E6B33", 2: "#8A5300", 3: "#A4001D" };

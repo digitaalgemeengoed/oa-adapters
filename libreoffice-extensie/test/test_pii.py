@@ -62,3 +62,62 @@ class TestPii(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPiiBladen(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        ctx = verbind()
+        cls.desktop = ctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", ctx)
+
+    def test_calc(self):
+        doc = self.desktop.loadComponentFromURL("private:factory/scalc", "_blank", 0, (p("Hidden", True),))
+        try:
+            b = doc.getSheets().getByIndex(0)
+            b.getCellByPosition(0, 0).setString("Jan de Vries")
+            b.getCellByPosition(1, 0).setString("Bel Jan of Jan de Vries")
+            b.getCellByPosition(0, 1).setFormula('="Jan"')
+            b.getCellByPosition(1, 1).setString("Janssen")
+            nieuw = op.markeer_bladen(doc, [
+                {"van": "Jan", "plaatshouder": "[PERSOON 2]", "ppl": 1, "voorvertoning": True},
+                {"van": "Jan de Vries", "plaatshouder": "[PERSOON 1]", "ppl": 1, "voorvertoning": True},
+            ])
+            self.assertEqual(len(nieuw), 3)
+            self.assertEqual(b.getCellByPosition(1, 0).getString(), "Bel [PERSOON 2] of [PERSOON 1]")
+            self.assertEqual(b.getCellByPosition(1, 1).getString(), "Janssen")
+            self.assertEqual(b.getCellByPosition(0, 1).getFormula(), '="Jan"')
+            plekken = op.lees_plekken_bladen(doc)
+            self.assertEqual([x["plek"] for x in plekken], ["s0c0r0#0", "s0c1r0#0", "s0c1r0#1"])
+            op.herstel_bladen(doc, [{"plek": "s0c1r0#0", "waarde": "Jan"}])
+            self.assertEqual(b.getCellByPosition(1, 0).getString(), "Bel Jan of [PERSOON 1]")
+            op.zet_definitief_bladen(doc)
+            doc.getCurrentController().select(b.getCellByPosition(1, 0))
+            self.assertEqual(op.plek_bij_selectie(doc)["plaatshouder"], "[PERSOON 1]")
+            self.assertEqual(op.plek_bij_selectie(doc)["plek"], "s0c1r0#0")
+        finally:
+            doc.close(True)
+
+    def test_impress(self):
+        from com.sun.star.awt import Point, Size
+        doc = self.desktop.loadComponentFromURL("private:factory/simpress", "_blank", 0, (p("Hidden", True),))
+        try:
+            dia = doc.getDrawPages().getByIndex(0)
+            vak = doc.createInstance("com.sun.star.drawing.TextShape")
+            dia.add(vak)
+            vak.setPosition(Point(1000, 1000))
+            vak.setSize(Size(10000, 3000))
+            vak.setString("Gesprek met Jan de Vries\nJan belt")
+            nieuw = op.markeer_bladen(doc, [
+                {"van": "Jan", "plaatshouder": "[PERSOON 2]", "ppl": 1, "voorvertoning": True},
+                {"van": "Jan de Vries", "plaatshouder": "[PERSOON 1]", "ppl": 1, "voorvertoning": True},
+            ])
+            self.assertEqual(vak.getString(), "Gesprek met [PERSOON 1]\n[PERSOON 2] belt")
+            plekken = op.lees_plekken_bladen(doc)
+            self.assertEqual(len(plekken), 2)
+            kenmerk = plekken[0]["plek"].split("#")[0]
+            op.herstel_bladen(doc, [{"plek": kenmerk + "#1", "waarde": "Jan"}])
+            self.assertEqual(vak.getString(), "Gesprek met [PERSOON 1]\nJan belt")
+            op.toon_bladen(doc, plekken[0]["plek"])
+            self.assertEqual(op.plek_bij_selectie(doc)["plaatshouder"], "[PERSOON 1]")
+        finally:
+            doc.close(True)

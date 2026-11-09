@@ -1,5 +1,6 @@
 import { BASISVERMOGENS, type Adapter, type Afdruk, type Inhoud, type Melding, type Plek, type Vermogen, type Werkomgeving } from "@digitaalgemeengoed/oa-contract";
-import { icuPatroon, icuVervanging, ordenParen, telInHtml, type Paar } from "../tekstvervangen.js";
+import { icuPatroon, icuVervanging, ordenParen, plaatshoudersIn, telInHtml, type Paar } from "../tekstvervangen.js";
+import type { PiiMarkering, PiiPlek } from "@digitaalgemeengoed/oa-contract";
 
 export type Formaat = "docx" | "ods" | "odp";
 
@@ -32,7 +33,79 @@ export class CollaboraAdapter implements Adapter {
     private readonly formaat: Formaat = "docx",
   ) {
     if (formaat !== "docx") this.vervangSegment = (plek, html) => this.herstelOpPlek(plek, html);
-    if (venster.unoOpdracht) this.vervangTekst = (paren) => this.zoekEnVervang(paren);
+    if (venster.unoOpdracht) {
+      this.vervangTekst = (paren) => this.zoekEnVervang(paren);
+      this.markeerPii = (m) => this.markeer(m);
+      this.leesPiiPlekken = () => this.plekken();
+      this.herstelPii = (p) => this.herstel(p);
+      this.zetPiiDefinitief = async () => undefined;
+      this.toonPiiPlek = (p) => this.toonPlaatshouder(p);
+    }
+  }
+
+  // --- Anonimiseren in het document -------------------------------------
+  // Collabora geeft via postMessage niets terug uit het document. Vervangen
+  // gaat met zoeken en vervangen van Collabora zelf; welke plaatshouders er
+  // staan, lezen we na opslaan uit het bestand. Klikken en de selectie geeft
+  // Collabora niet door; terugzetten geldt voor alle plekken van een
+  // plaatshouder tegelijk.
+
+  readonly markeerPii?: (m: PiiMarkering[]) => Promise<PiiPlek[]>;
+  readonly leesPiiPlekken?: () => Promise<PiiPlek[]>;
+  readonly herstelPii?: (p: { plek: string; waarde: string }[]) => Promise<void>;
+  readonly zetPiiDefinitief?: () => Promise<void>;
+  readonly toonPiiPlek?: (plek: string) => void;
+  private laatsteScan: PiiPlek[] = [];
+
+  private vervangAlles(van: string, naar: string, regex = true): void {
+    this.venster.unoOpdracht!(".uno:ExecuteSearch", {
+      "SearchItem.SearchString": { type: "string", value: regex ? icuPatroon(van) : van },
+      "SearchItem.ReplaceString": { type: "string", value: icuVervanging(naar) },
+      "SearchItem.Command": { type: "long", value: 3 }, // REPLACE_ALL
+      "SearchItem.AlgorithmType": { type: "short", value: 1 }, // REGEXP
+      "SearchItem.TransliterationFlags": { type: "long", value: 0 },
+      "SearchItem.Backward": { type: "boolean", value: false },
+    });
+  }
+
+  private async plekken(): Promise<PiiPlek[]> {
+    await this.venster.slaOp();
+    const { html } = await this.vraag<{ html: string }>("/html");
+    const tekst = html.replace(/<[^>]*>/g, " ");
+    this.laatsteScan = plaatshoudersIn(tekst).map((p, i) => ({ plek: `h${i}`, plaatshouder: p.plaatshouder, voorvertoning: false }));
+    return this.laatsteScan;
+  }
+
+  private async markeer(markeringen: PiiMarkering[]): Promise<PiiPlek[]> {
+    const voor = await this.plekken();
+    for (const m of [...markeringen].filter((x) => x.van.trim()).sort((a, b) => b.van.length - a.van.length)) this.vervangAlles(m.van, m.plaatshouder);
+    const na = await this.plekken();
+    // Nieuw: wat er van deze plaatshouders meer staat dan voorheen.
+    const tel = (l: PiiPlek[], ph: string) => l.filter((p) => p.plaatshouder === ph).length;
+    const namen = new Set(markeringen.map((m) => m.plaatshouder));
+    return [...namen].flatMap((ph) => na.filter((p) => p.plaatshouder === ph).slice(tel(voor, ph)));
+  }
+
+  private async herstel(plekken: { plek: string; waarde: string }[]): Promise<void> {
+    const per = new Map<string, string>();
+    for (const { plek, waarde } of plekken) {
+      const ph = this.laatsteScan.find((p) => p.plek === plek)?.plaatshouder;
+      if (ph) per.set(ph, waarde);
+    }
+    // Letterlijk zoeken: \Q…\E, zonder woordgrens (een plaatshouder staat tussen haken).
+    for (const [ph, waarde] of per) this.vervangAlles(`\\Q${ph}\\E`, waarde, false);
+    if (per.size) await this.venster.slaOp();
+  }
+
+  private toonPlaatshouder(plek: string): void {
+    const ph = this.laatsteScan.find((p) => p.plek === plek)?.plaatshouder;
+    if (!ph) return;
+    this.venster.unoOpdracht!(".uno:ExecuteSearch", {
+      "SearchItem.SearchString": { type: "string", value: `\\Q${ph}\\E` },
+      "SearchItem.Command": { type: "long", value: 0 }, // FIND
+      "SearchItem.AlgorithmType": { type: "short", value: 1 },
+      "SearchItem.Backward": { type: "boolean", value: false },
+    });
   }
 
   readonly vervangTekst?: (paren: Paar[]) => Promise<number>;
@@ -66,7 +139,7 @@ export class CollaboraAdapter implements Adapter {
   werkomgeving(): Werkomgeving {
     const vermogens: Vermogen[] = [...BASISVERMOGENS, "afdruk-schrijven", "bestand-opleveren"];
     if (this.formaat !== "docx") vermogens.push("segment-vervangen");
-    if (this.vervangTekst) vermogens.push("tekst-vervangen");
+    if (this.vervangTekst) vermogens.push("tekst-vervangen", "pii-markeren");
     const naam = this.formaat === "ods" ? "Collabora Online (rekenblad)" : this.formaat === "odp" ? "Collabora Online (presentatie)" : "Collabora Online";
     return { id: "collabora-online", naam, vermogens };
   }

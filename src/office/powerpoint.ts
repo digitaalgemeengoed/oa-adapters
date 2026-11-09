@@ -1,6 +1,7 @@
 /// <reference types="office-js" />
 import { BASISVERMOGENS, type Adapter, type Afdruk, type Inhoud, type Melding, type Plek, type Vermogen, type Werkomgeving } from "@digitaalgemeengoed/oa-contract";
-import { heelWoord, ordenParen, schoonSelectie, type Paar } from "../tekstvervangen.js";
+import { heelWoord, ordenParen, PII_KLEUR, plaatshoudersIn, schoonSelectie, vondstenVoorMarkeren, type Paar } from "../tekstvervangen.js";
+import type { PiiMarkering, PiiPlek } from "@digitaalgemeengoed/oa-contract";
 import { eersteElement, esc, HANDMATIG, img, leesAfdrukUitBestand, leesOfficeBestand, NIET_GEVONDEN, padDelen, schrijfAfdrukInBestand } from "./gedeeld.js";
 
 /** Plaatshouders die een titel zijn. */
@@ -66,7 +67,8 @@ export class PowerPointAdapter implements Adapter {
   werkomgeving(): Werkomgeving {
     const vermogens: Vermogen[] = [...BASISVERMOGENS, "segment-vervangen", "afdruk-schrijven", "bestand-opleveren"];
     if (this.selecteren) vermogens.push("plek-tonen", "selectie-lezen");
-    if (this.deeltekst) vermogens.push("tekst-vervangen");
+    if (this.deeltekst) vermogens.push("tekst-vervangen", "pii-markeren");
+    if (this.deeltekst && this.selecteren) vermogens.push("pii-klik");
     return { id: "powerpoint", naam: "Microsoft PowerPoint", vermogens };
   }
 
@@ -200,6 +202,134 @@ export class PowerPointAdapter implements Adapter {
       });
       this.kaart = [];
       return aantal;
+    };
+  }
+
+  // --- Anonimiseren in het document -------------------------------------
+  // De plaatshouder staat als tekst in het tekstvak, met de kleur van het
+  // niveau en (zolang het een voorvertoning is) een gestreepte onderstreping.
+  // De plek is dia, vorm en het hoeveelste voorkomen (d256/s3#0).
+
+  private async vakken(ctx: PowerPoint.RequestContext) {
+    const { dias, vormen, tekst } = await laadTekstvormen(ctx, this.plaatshouders);
+    const uit: { dia: string; vorm: string; bereik: PowerPoint.TextRange; kenmerk: string }[] = [];
+    vormen.forEach((c, i) =>
+      c.items.forEach((v) => {
+        const bereik = tekst.get(v.id);
+        if (bereik) uit.push({ dia: dias.items[i]!.id, vorm: v.id, bereik, kenmerk: `${dias.items[i]!.id}/${v.id}` });
+      }),
+    );
+    return uit;
+  }
+
+  get markeerPii(): ((m: PiiMarkering[]) => Promise<PiiPlek[]>) | undefined {
+    if (!this.deeltekst) return undefined;
+    return async (markeringen) => {
+      const voor = new Set((await this.leesPiiPlekken!()).map((p) => p.plek));
+      await PowerPoint.run(async (ctx) => {
+        for (const v of await this.vakken(ctx)) {
+          for (const x of vondstenVoorMarkeren(v.bereik.text, markeringen)) {
+            const deel = v.bereik.getSubstring(x.begin, x.eind - x.begin);
+            deel.text = x.m.plaatshouder;
+            const nieuw = v.bereik.getSubstring(x.begin, x.m.plaatshouder.length);
+            nieuw.font.color = PII_KLEUR[x.m.ppl] ?? PII_KLEUR[1]!;
+            nieuw.font.underline = x.m.voorvertoning ? "Dash" : "None";
+          }
+        }
+        await ctx.sync();
+      });
+      this.kaart = [];
+      return (await this.leesPiiPlekken!()).filter((p) => !voor.has(p.plek));
+    };
+  }
+
+  get leesPiiPlekken(): (() => Promise<PiiPlek[]>) | undefined {
+    if (!this.deeltekst) return undefined;
+    return async () =>
+      PowerPoint.run(async (ctx) =>
+        (await this.vakken(ctx)).flatMap((v) => plaatshoudersIn(v.bereik.text).map((p, i) => ({ plek: `${v.kenmerk}#${i}`, plaatshouder: p.plaatshouder, voorvertoning: false }))),
+      );
+  }
+
+  get herstelPii(): ((p: { plek: string; waarde: string }[]) => Promise<void>) | undefined {
+    if (!this.deeltekst) return undefined;
+    return async (plekken) => {
+      await PowerPoint.run(async (ctx) => {
+        const vakken = await this.vakken(ctx);
+        const per = new Map<string, { n: number; waarde: string }[]>();
+        for (const { plek, waarde } of plekken) {
+          const [kenmerk, n] = plek.split("#");
+          per.set(kenmerk!, [...(per.get(kenmerk!) ?? []), { n: Number(n), waarde }]);
+        }
+        for (const [kenmerk, wat] of per) {
+          const v = vakken.find((x) => x.kenmerk === kenmerk);
+          if (!v) continue;
+          const ph = plaatshoudersIn(v.bereik.text);
+          for (const { n, waarde } of wat.sort((a, b) => b.n - a.n)) {
+            const p = ph[n];
+            if (!p) continue;
+            const deel = v.bereik.getSubstring(p.begin, p.eind - p.begin);
+            deel.text = waarde;
+            v.bereik.getSubstring(p.begin, waarde.length).font.underline = "None";
+          }
+        }
+        await ctx.sync();
+      });
+      this.kaart = [];
+    };
+  }
+
+  get zetPiiDefinitief(): (() => Promise<void>) | undefined {
+    if (!this.deeltekst) return undefined;
+    return async () =>
+      PowerPoint.run(async (ctx) => {
+        for (const v of await this.vakken(ctx)) for (const p of plaatshoudersIn(v.bereik.text)) v.bereik.getSubstring(p.begin, p.eind - p.begin).font.underline = "None";
+        await ctx.sync();
+      });
+  }
+
+  get toonPiiPlek(): ((plek: string) => void) | undefined {
+    if (!this.selecteren) return undefined;
+    return (plek) => {
+      const [dia, rest] = plek.split("/");
+      const vorm = rest?.split("#")[0];
+      PowerPoint.run(async (ctx) => {
+        ctx.presentation.setSelectedSlides([dia!]);
+        if (vorm) ctx.presentation.slides.getItem(dia!).setSelectedShapes([vorm]);
+        await ctx.sync();
+      }).catch(() => undefined);
+    };
+  }
+
+  get bijPiiKlik(): ((t: (p: PiiPlek) => void) => () => void) | undefined {
+    if (!this.selecteren || !this.deeltekst) return undefined;
+    return (terugroep) => {
+      let laatste = "";
+      const bij = () => {
+        PowerPoint.run(async (ctx) => {
+          const dias = ctx.presentation.getSelectedSlides();
+          dias.load("items/id");
+          const vormen = ctx.presentation.getSelectedShapes();
+          vormen.load("items/id");
+          await ctx.sync();
+          const dia = dias.items[0]?.id;
+          const vorm = vormen.items[0];
+          let plek = "";
+          if (dia && vorm) {
+            const t = vorm.textFrame.textRange;
+            t.load("text");
+            await ctx.sync().catch(() => undefined);
+            const p = plaatshoudersIn(t.text ?? "")[0];
+            if (p) {
+              plek = `${dia}/${vorm.id}#0`;
+              if (plek !== laatste) terugroep({ plek, plaatshouder: p.plaatshouder, voorvertoning: false });
+            }
+          }
+          laatste = plek;
+        }).catch(() => undefined);
+      };
+      Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, bij);
+      return () => Office.context.document.removeHandlerAsync(Office.EventType.DocumentSelectionChanged, { handler: bij });
     };
   }
 
