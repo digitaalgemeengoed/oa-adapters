@@ -31,5 +31,9 @@ const uit = {
   ontbrekend: metadateren.bevindingen(f.objecttype, f.metadata),
   suggesties: metadateren.suggesties(f.inhoud, f.metadata),
   meerSuggesties: f.inhouden.map((i: never) => metadateren.suggesties(i, {})),
+  veldenRgbz: metadateren.velden(f.objecttypeRgbz),
+  ontbrekendRgbz: metadateren.bevindingen(f.objecttypeRgbz, f.metadataRgbz),
+  suggestiesRgbz: f.inhouden.map((i: never) => metadateren.suggesties(i, f.metadataRgbz, f.objecttypeRgbz)),
+  opgeschoondRgbz: metadateren.opgeschoond(f.metadataRgbz, f.objecttypeRgbz),
 };
 process.stdout.write(JSON.stringify(uit));

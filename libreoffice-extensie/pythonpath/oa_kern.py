@@ -24,28 +24,66 @@ from html.parser import HTMLParser
 # ---------------------------------------------------------------------------
 
 
+MODELNAAM = {"mdto": "MDTO", "rgbz": "RGBZ", "tmlo": "TMLO"}
+
+# Oude schema's (zonder x-oa-rol): de rollen van objecttype document versie 1.
+ROL_VERSIE_1 = {
+    "naam": "titel",
+    "omschrijving": "omschrijving",
+    "informatiecategorie": "informatiecategorie",
+    "vertrouwelijkheid": "vertrouwelijkheid",
+    "taal": "taal",
+    "dossier": "dossier",
+    "zaak": "zaak",
+}
+
+
+def rollen_van(schema):
+    """Welke sleutel welke rol heeft (oa-contract: rollenVan)."""
+    props = (schema or {}).get("properties") or {}
+    heeft = any(e.get("x-oa-rol") for e in props.values())
+    uit = {}
+    for sleutel, e in props.items():
+        rol = e.get("x-oa-rol") if heeft else ROL_VERSIE_1.get(sleutel)
+        if rol and rol not in uit:
+            uit[rol] = sleutel
+    return uit
+
+
 def velden(objecttype):
-    """De invoervelden van een objecttype: verplichte eerst, in de volgorde van het schema."""
+    """De invoervelden van een objecttype. Met een model uit het beheerportaal in de volgorde
+    die de gemeente koos; anders verplichte eerst, in de volgorde van het schema."""
     schema = objecttype.get("schema") or {}
     verplicht = set(schema.get("required") or [])
+    model = schema.get("x-oa-model") or "mdto"
+    rollen = {sleutel: rol for rol, sleutel in rollen_van(schema).items()}
     lijst = []
     for naam, e in (schema.get("properties") or {}).items():
         if e.get("enum"):
             soort = "keuze"
-        elif (e.get("maxLength") or 0) > 400:
+        elif e.get("x-oa-type") == "datum":
+            soort = "datum"
+        elif e.get("type") in ("number", "integer"):
+            soort = "getal"
+        elif e.get("x-oa-type") == "lange-tekst" or (e.get("maxLength") or 0) > 400:
             soort = "lange-tekst"
         else:
             soort = "tekst"
+        element = e.get("x-" + model)
         lijst.append({
             "naam": naam,
             "label": e.get("title") or naam,
             "beschrijving": e.get("description"),
             "soort": soort,
             "verplicht": naam in verplicht,
+            "rol": rollen.get(naam),
+            "element": "%s %s" % (MODELNAAM.get(model, model.upper()), element) if isinstance(element, str) else None,
             "opties": e.get("enum"),
             "maxLengte": e.get("maxLength"),
             "standaard": e.get("default"),
         })
+    if schema.get("x-oa-model"):
+        return lijst
     return [v for v in lijst if v["verplicht"]] + [v for v in lijst if not v["verplicht"]]
 
 
@@ -53,18 +91,26 @@ _H1 = re.compile(r"<h1[^>]*>([\s\S]*?)</h1>", re.I)
 _DIATITEL = re.compile(r'^\s*<section data-oa="dia"><h2[^>]*>([\s\S]*?)</h2>', re.I)
 
 
-def suggesties(inhoud, huidig):
+def suggesties(inhoud, huidig, objecttype=None):
     """Voorstellen uit de inhoud. De medewerker beslist; een voorstel wordt nooit vanzelf vastgelegd."""
     s = {}
-    if inhoud.get("formaat") == "html" and not huidig.get("naam"):
+    rollen = rollen_van(objecttype.get("schema")) if objecttype else {"titel": "naam", "taal": "taal"}
+    titel, taal = rollen.get("titel"), rollen.get("taal")
+    if titel and inhoud.get("formaat") == "html" and not huidig.get(titel):
         # De eerste kop 1; in een presentatie de titel van de eerste dia.
         m = _H1.search(inhoud.get("data") or "") or _DIATITEL.search(inhoud.get("data") or "")
         if m:
-            titel = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m.group(1))).strip()
-            if len(titel) >= 3:
-                s["naam"] = titel[:200]
-    if not huidig.get("taal"):
-        s["taal"] = "nl"
+            t = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m.group(1))).strip()
+            if len(t) >= 3:
+                s[titel] = t[:200]
+    if taal and not huidig.get(taal):
+        v = next((x for x in velden(objecttype) if x["naam"] == taal), None) if objecttype else None
+        if v and v.get("standaard"):
+            s[taal] = v["standaard"]
+        elif v is None or not v.get("opties") or "nl" in v["opties"]:
+            s[taal] = "nl"
+        else:
+            s[taal] = v["opties"][0]
     return s
 
 
@@ -75,7 +121,7 @@ def ontbrekend(objecttype, metadata):
             "id": "md-" + v["naam"],
             "module": "metadateren",
             "ernst": "fout",
-            "regel": "MDTO " + v["naam"],
+            "regel": v.get("element") or "MDTO " + v["naam"],
             "melding": "%s is nog niet ingevuld." % v["label"],
         }
         for v in velden(objecttype)
@@ -83,9 +129,22 @@ def ontbrekend(objecttype, metadata):
     ]
 
 
-def opgeschoond(metadata):
-    """Alleen ingevulde waarden; lege velden gaan niet als lege tekst naar het platform."""
-    return {k: w for k, w in metadata.items() if w not in (None, "")}
+def opgeschoond(metadata, objecttype=None):
+    """Alleen ingevulde waarden; lege velden gaan niet als lege tekst naar het platform.
+    Een getalveld gaat als getal."""
+    getal = {v["naam"] for v in velden(objecttype) if v["soort"] == "getal"} if objecttype else set()
+    uit = {}
+    for k, w in metadata.items():
+        if w in (None, ""):
+            continue
+        if k in getal and isinstance(w, str):
+            try:
+                g = float(w.strip().replace(",", "."))
+                w = int(g) if g.is_integer() else g
+            except ValueError:
+                pass
+        uit[k] = w
+    return uit
 
 
 # ---------------------------------------------------------------------------

@@ -705,6 +705,8 @@ class Paneel(unohelper.Base, XUIElement, XToolPanel, XSidebarPanel, XComponent):
             c.addTextListener(_Tekst(zet))
             self.y += h + RUIMTE
         else:
+            if veld["soort"] == "datum":
+                self.regel("Als jjjj-mm-dd, bijvoorbeeld 2026-11-09.", grootte=8.5, kleur=GRIJS)
             eig = {"Text": waarde, "Border": 1}
             if veld.get("maxLengte"):
                 eig["MaxTextLen"] = int(veld["maxLengte"])

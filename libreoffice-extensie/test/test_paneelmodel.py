@@ -59,7 +59,7 @@ class NepVerbinding:
             raise VerbindingsFout(401, "niet-ingelogd", "Log eerst in.")
         return {"naam": "Femke", "gemeente": "haarlem", "rollen": ["medewerker"], "sub": "x"}
 
-    def objecttype(self, naam):
+    def objecttype(self, naam, versie=None):
         return TYPE
 
     def object(self, i):

@@ -336,5 +336,219 @@
    "formaat": "html",
    "data": "<section data-oa=\"blad\"><h2>Blad1</h2></section>"
   }
- ]
+ ],
+ "objecttypeRgbz": {
+  "naam": "document",
+  "versie": 2,
+  "titel": "Document",
+  "status": "actief",
+  "vervaldatum": null,
+  "schema": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "type": "object",
+   "x-oa-model": "rgbz",
+   "x-oa-config": {
+    "basis": "rgbz",
+    "velden": [
+     {
+      "sleutel": "titel",
+      "aan": true,
+      "verplicht": true
+     },
+     {
+      "sleutel": "beschrijving",
+      "aan": true,
+      "verplicht": false
+     },
+     {
+      "sleutel": "vertrouwelijkheidaanduiding",
+      "aan": true,
+      "verplicht": true
+     },
+     {
+      "sleutel": "auteur",
+      "aan": true,
+      "verplicht": true
+     },
+     {
+      "sleutel": "creatiedatum",
+      "aan": true,
+      "verplicht": true
+     },
+     {
+      "sleutel": "status",
+      "aan": true,
+      "verplicht": false
+     },
+     {
+      "sleutel": "taal",
+      "aan": true,
+      "verplicht": false
+     },
+     {
+      "sleutel": "zaak",
+      "aan": true,
+      "verplicht": false
+     },
+     {
+      "sleutel": "trefwoorden",
+      "aan": false,
+      "verplicht": false
+     },
+     {
+      "sleutel": "ontvangstdatum",
+      "aan": false,
+      "verplicht": false
+     },
+     {
+      "sleutel": "verzenddatum",
+      "aan": false,
+      "verplicht": false
+     },
+     {
+      "sleutel": "informatiecategorie",
+      "aan": true,
+      "verplicht": true
+     },
+     {
+      "sleutel": "bedrag",
+      "aan": true,
+      "verplicht": false,
+      "label": "Bedrag",
+      "eigen": {
+       "type": "getal"
+      }
+     }
+    ]
+   },
+   "required": [
+    "titel",
+    "vertrouwelijkheidaanduiding",
+    "auteur",
+    "creatiedatum",
+    "informatiecategorie"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "titel": {
+     "title": "Titel",
+     "description": "De titel van het stuk.",
+     "type": "string",
+     "maxLength": 200,
+     "x-rgbz": "titel",
+     "x-oa-rol": "titel"
+    },
+    "beschrijving": {
+     "title": "Beschrijving",
+     "description": "Een korte beschrijving van de inhoud.",
+     "type": "string",
+     "maxLength": 1000,
+     "x-oa-type": "lange-tekst",
+     "x-rgbz": "beschrijving",
+     "x-oa-rol": "omschrijving"
+    },
+    "vertrouwelijkheidaanduiding": {
+     "title": "Vertrouwelijkheid",
+     "description": "De vertrouwelijkheidaanduiding van het stuk.",
+     "enum": [
+      "openbaar",
+      "beperkt openbaar",
+      "intern",
+      "zaakvertrouwelijk",
+      "vertrouwelijk",
+      "confidentieel",
+      "geheim",
+      "zeer geheim"
+     ],
+     "x-rgbz": "vertrouwelijkheidaanduiding",
+     "x-oa-rol": "vertrouwelijkheid"
+    },
+    "auteur": {
+     "title": "Auteur",
+     "description": "De persoon of organisatie die het stuk heeft gemaakt.",
+     "type": "string",
+     "maxLength": 200,
+     "x-rgbz": "auteur",
+     "x-oa-rol": "auteur"
+    },
+    "creatiedatum": {
+     "title": "Creatiedatum",
+     "description": "De datum waarop het stuk is gemaakt.",
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+     "x-oa-type": "datum",
+     "x-rgbz": "creatiedatum",
+     "x-oa-rol": "datum"
+    },
+    "status": {
+     "title": "Status",
+     "description": "Waar het stuk staat in zijn levensloop.",
+     "enum": [
+      "in bewerking",
+      "ter vaststelling",
+      "definitief",
+      "gearchiveerd"
+     ],
+     "x-rgbz": "status"
+    },
+    "taal": {
+     "title": "Taal",
+     "description": "De taal van het stuk, in drie letters zoals de ZGW-API's die gebruiken.",
+     "enum": [
+      "dut",
+      "eng",
+      "ger",
+      "fre",
+      "fry",
+      "pap"
+     ],
+     "default": "dut",
+     "x-rgbz": "taal",
+     "x-oa-rol": "taal"
+    },
+    "zaak": {
+     "title": "Zaak",
+     "description": "Het zaaknummer waar het stuk bij hoort.",
+     "type": "string",
+     "maxLength": 100,
+     "x-rgbz": "zaakinformatieobject.zaak",
+     "x-oa-rol": "zaak"
+    },
+    "informatiecategorie": {
+     "title": "Informatiecategorie (Woo)",
+     "description": "De categorie uit artikel 3.3 van de Woo.",
+     "enum": [
+      "wetten en algemeen verbindende voorschriften",
+      "overige besluiten van algemene strekking",
+      "ontwerpen van regelgeving met adviesaanvraag",
+      "organisatie en werkwijze",
+      "bereikbaarheidsgegevens",
+      "bij vertegenwoordigende organen ingekomen stukken",
+      "vergaderstukken Staten-Generaal",
+      "vergaderstukken decentrale overheden",
+      "agenda's en besluitenlijsten bestuurscolleges",
+      "adviezen",
+      "convenanten",
+      "jaarplannen en jaarverslagen",
+      "subsidieverplichtingen anders dan met beschikking",
+      "Woo-verzoeken en -besluiten",
+      "onderzoeksrapporten",
+      "beschikkingen",
+      "klachtoordelen"
+     ],
+     "x-oa-rol": "informatiecategorie"
+    },
+    "bedrag": {
+     "title": "Bedrag",
+     "type": "number",
+     "x-oa-eigen": true
+    }
+   }
+  }
+ },
+ "metadataRgbz": {
+  "titel": "",
+  "bedrag": "1250,5",
+  "taal": ""
+ }
 }

@@ -206,9 +206,13 @@ class Model:
                         raise
                     self.afdruk = None
                     self.melding = {"soort": "info", "tekst": "Dit stuk draagt een identificatie die het platform niet kent (van een andere gemeente of omgeving). Registreer het opnieuw."}
+            # Een vastgelegd stuk houdt het metadatamodel waarmee het is vastgelegd.
+            eigen = (self.object or {}).get("objecttype") or {}
+            if eigen.get("versie") and (eigen.get("naam"), eigen.get("versie")) != (self.type.get("naam"), self.type.get("versie")):
+                self.type = v.objecttype(eigen["naam"], eigen["versie"])
             self.onbereikbaar = False
             self.metadata = {k: ("" if w is None else str(w)) for k, w in ((self.object or {}).get("metadata") or {}).items()}
-            self.voorstellen = kern.suggesties(self._lees_inhoud(), self.metadata)
+            self.voorstellen = kern.suggesties(self._lees_inhoud(), self.metadata, self.type)
             self._laad_geschiedenis()
             self.fase = "klaar"
 
@@ -227,7 +231,7 @@ class Model:
         def werk():
             self.fouten = {}
             inhoud, weergave = self._te_bewaren()
-            obj = self.verbinding.maak_object(OBJECTTYPE, kern.opgeschoond(self.metadata), inhoud, weergave)
+            obj = self.verbinding.maak_object(OBJECTTYPE, kern.opgeschoond(self.metadata, self.type), inhoud, weergave)
             self.object = obj
             self._schrijf_afdruk(obj)
             self.metadata = {k: ("" if w is None else str(w)) for k, w in (obj.get("metadata") or {}).items()}
@@ -239,7 +243,7 @@ class Model:
     def leg_metadata_vast(self):
         def werk():
             self.fouten = {}
-            obj = self.verbinding.leg_metadata_vast(self.object["identificatie"], kern.opgeschoond(self.metadata), self.object.get("volgnummer"))
+            obj = self.verbinding.leg_metadata_vast(self.object["identificatie"], kern.opgeschoond(self.metadata, self.type), self.object.get("volgnummer"))
             self.object = obj
             self.melding = {"soort": "ok", "tekst": "De metadata is vastgelegd."}
             self._laad_geschiedenis()

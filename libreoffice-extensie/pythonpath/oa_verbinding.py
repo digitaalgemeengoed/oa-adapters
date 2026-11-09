@@ -101,8 +101,9 @@ class Verbinding:
     def wie_ben_ik(self):
         return self.vraag("GET", LEES["wie"])
 
-    def objecttype(self, naam):
-        return self.vraag("GET", LEES["objecttype"] % _id(naam))
+    def objecttype(self, naam, versie=None):
+        """Het actieve objecttype, of de versie waarmee een stuk is vastgelegd."""
+        return self.vraag("GET", LEES["objecttype"] % _id(naam) + ("?versie=%d" % int(versie) if versie else ""))
 
     def object(self, identificatie):
         return self.vraag("GET", LEES["object"] % _id(identificatie))

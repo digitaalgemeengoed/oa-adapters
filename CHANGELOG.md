@@ -1,5 +1,9 @@
 # Wijzigingen
 
+## 0.16.0 — 2026-11-09 (LibreOffice-extensie 0.14.0)
+
+Het eigen paneel van LibreOffice volgt het metadatamodel van de gemeente, net als het webpaneel: velden via de rol, datum (met een hint) en getal, en het model waarmee een stuk is vastgelegd. `test/kruis.json` vergelijkt Python en TypeScript nu ook op een RGBZ-model met een eigen veld.
+
 ## 0.15.3 — 2026-11-09 (LibreOffice-extensie 0.13.3)
 
 LibreOffice: het webpaneel in de zijbalk was niet helemaal naar beneden te scrollen als er onderin een werkbalk bijkwam (bijvoorbeeld de zoekbalk, Ctrl+F) nadat het paneel er stond. De zijbalk gaf het paneel dan geen nieuwe maat; de webweergave hield haar oude hoogte en de onderkant (zoals de knop *Metadata vastleggen*) viel weg achter de werkbalk. Nu volgt het paneel de maat van het documentvenster en tekent het opnieuw. Nagebootst en getest in Writer (GTK).

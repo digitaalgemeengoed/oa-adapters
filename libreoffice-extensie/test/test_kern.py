@@ -54,6 +54,12 @@ class Kruistest(unittest.TestCase):
         self.assertEqual(k.ontbrekend(self.f["objecttype"], self.f["metadata"]), self.ts["ontbrekend"])
         self.assertEqual(k.suggesties(self.f["inhoud"], self.f["metadata"]), self.ts["suggesties"])
         self.assertEqual([k.suggesties(i, {}) for i in self.f["inhouden"]], self.ts["meerSuggesties"])
+        # Een ander metadatamodel (RGBZ, met een eigen getalveld) uit het beheerportaal.
+        t, md = self.f["objecttypeRgbz"], self.f["metadataRgbz"]
+        self.assertEqual(zonder_none(k.velden(t)), self.ts["veldenRgbz"])
+        self.assertEqual(k.ontbrekend(t, md), self.ts["ontbrekendRgbz"])
+        self.assertEqual([k.suggesties(i, md, t) for i in self.f["inhouden"]], self.ts["suggestiesRgbz"])
+        self.assertEqual(k.opgeschoond(md, t), self.ts["opgeschoondRgbz"])
         self.assertEqual(self.ts["meerSuggesties"][0]["naam"], "Fietsenstalling Stationsplein")
 
     def test_omschrijving(self):
