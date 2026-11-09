@@ -1,5 +1,9 @@
 # Wijzigingen
 
+## 0.9.1 — 2026-11-09
+
+Paneel 0.6.0 met de module Anonimiseren. De knop Anonimiseren in de werkbalk van LibreOffice heet niet meer "(volgt)"; extensie 0.8.1.
+
 ## 0.9.0 — 2026-11-09
 
 **Knoppen van de assistent in de werkbalk**, in elke werkomgeving: Paneel, de modules, Beoordelen (zoals de demo).

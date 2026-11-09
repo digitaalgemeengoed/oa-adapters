@@ -81,7 +81,7 @@
           </node>
           <node oor:name="k06" oor:op="replace">
             <prop oor:name="URL" oor:type="xs:string"><value>service:nl.digitaalgemeengoed.oa.Assistent?module:anon</value></prop>
-            <prop oor:name="Title" oor:type="xs:string"><value>Anonimiseren (volgt)</value></prop>
+            <prop oor:name="Title" oor:type="xs:string"><value>Anonimiseren</value></prop>
             <prop oor:name="Target" oor:type="xs:string"><value>_self</value></prop>
             <prop oor:name="Context" oor:type="xs:string"><value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument,com.sun.star.presentation.PresentationDocument</value></prop>
           </node>
