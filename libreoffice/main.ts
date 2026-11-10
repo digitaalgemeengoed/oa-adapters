@@ -96,6 +96,7 @@ async function start() {
 
 /** De sessie voor het zijpaneel naar LibreOffice op deze computer. */
 async function aanmelden(brug: Brug) {
+  document.querySelector(".oa-laden-vast")?.remove();
   document.getElementById("document")!.textContent = "Aanmelden voor LibreOffice";
   const sessie = await koppelSessie();
   if (!sessie) {

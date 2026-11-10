@@ -108,10 +108,12 @@ Office.onReady(async (info) => {
   const e = eis[host];
   if (!e) {
     status.textContent = "Deze invoegtoepassing werkt in Word, Excel en PowerPoint.";
+    document.querySelector(".oa-laden-vast")?.remove();
     return;
   }
   if (!Office.context.requirements.isSetSupported(e[1], e[2])) {
     status.textContent = `Deze versie van ${e[0]} is te oud voor de assistent (${e[1]} ${e[2]} nodig).`;
+    document.querySelector(".oa-laden-vast")?.remove();
     return;
   }
   document.getElementById("inloggen")!.addEventListener("click", inloggen);

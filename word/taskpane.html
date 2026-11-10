@@ -9,14 +9,34 @@
   </head>
   <body>
     <div class="taak">
-      <p id="status" class="taak-status" role="status">Bezig met starten…</p>
+      <p id="status" class="taak-status" role="status"></p>
       <section id="aanmelden" class="taak-aanmelden" hidden>
         <h1>Office Assistent</h1>
         <p>Log in met je account van de gemeente om de assistent te gebruiken.</p>
         <button type="button" id="inloggen">Inloggen</button>
         <p id="aanmeldfout" class="taak-fout" hidden></p>
       </section>
-      <div id="paneel"></div>
+      <div id="paneel">
+        <div class="oa-laden oa-laden-vast" role="status" aria-live="polite">
+          <style>
+            .oa-laden-vast { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 32px 12px; text-align: center; font: 15px/1.4 system-ui, sans-serif; color: #1d1d1b; }
+            section:not([hidden]) ~ * .oa-laden-vast, section:not([hidden]) ~ .oa-laden-vast { display: none; }
+            .oa-laden-vast .c { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(26, 94, 168, 0.2); border-top-color: #1a5ea8; animation: oa-laden-draai 0.9s linear infinite; }
+            .oa-laden-vast p { margin: 0; }
+            .oa-laden-vast .t { font-weight: 600; }
+            .oa-laden-vast .s { font-size: 13px; color: #555; max-width: 30em; }
+            .oa-laden-vast .b { width: min(240px, 80%); height: 6px; border-radius: 3px; background: rgba(26, 94, 168, 0.15); overflow: hidden; }
+            .oa-laden-vast .b span { display: block; width: 40%; height: 100%; background: #1a5ea8; animation: oa-laden-schuif 1.4s ease-in-out infinite; }
+            @keyframes oa-laden-draai { to { transform: rotate(360deg); } }
+            @keyframes oa-laden-schuif { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+            @media (prefers-reduced-motion: reduce) { .oa-laden-vast .c, .oa-laden-vast .b span { animation-duration: 4s; } }
+          </style>
+          <div class="c" aria-hidden="true"></div>
+          <p class="t">De Assistent wordt geladen…</p>
+          <div class="b" aria-hidden="true"><span></span></div>
+          <p class="s">Stap 1 van 2: de Assistent ophalen. Over een trage (mobiele) verbinding kan dit even duren.</p>
+        </div>
+      </div>
     </div>
     <script type="module" src="./taskpane.ts"></script>
   </body>

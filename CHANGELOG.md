@@ -1,5 +1,10 @@
 # Wijzigingen
 
+## 0.19.0 — 2026-11-10
+
+- Een laadscherm in de pagina zelf (demo-werkomgeving, Word, LibreOffice): zichtbaar zodra de pagina er is, ook als de Assistent over een trage (mobiele) verbinding nog binnenkomt. Daarna neemt het paneel het over met een voortgangsbalk.
+- Hangt af van oa-paneel 0.12.0 (Classificeren, vergrendelen, wijzigingsvoorstellen).
+
 ## 0.18.0 (LibreOffice-extensie 0.15.0) — 2026-11-10
 
 Hangt af van oa-paneel 0.11.0. Het eigen paneel van de LibreOffice-extensie schrijft ook de versie en de naam van het metadatamodel in de afdruk, net als oa-kern.
