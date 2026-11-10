@@ -24,6 +24,13 @@ from oa_verbinding import Verbinding, VerbindingsFout
 
 OBJECTTYPE = "document"
 AFDRUK = "oa-afdruk"
+MODELNAMEN = {"mdto": "MDTO", "rgbz": "RGBZ", "tmlo": "TMLO"}
+
+
+def modelnaam(objecttype):
+    """De naam van het metadatamodel, zoals modelnaam() in oa-contract."""
+    c = ((objecttype or {}).get("schema") or {}).get("x-oa-config") or {}
+    return (c.get("naam") or "").strip() or MODELNAMEN.get(c.get("basis"), "Standaardmodel")
 
 
 
@@ -175,7 +182,13 @@ class Model:
 
     def _schrijf_afdruk(self, obj):
         versies = obj.get("versies") or []
-        self.afdruk = {"identificatie": obj["identificatie"], "versie": versies[-1]["nummer"] if versies else 0, "objecttype": obj["objecttype"]["naam"]}
+        ot = obj["objecttype"]
+        self.afdruk = {"identificatie": obj["identificatie"], "versie": versies[-1]["nummer"] if versies else 0, "objecttype": ot["naam"]}
+        # Het metadatamodel waarmee het stuk is vastgelegd (zoals oa-kern afdrukVan).
+        if ot.get("versie"):
+            self.afdruk["objecttypeVersie"] = ot["versie"]
+            if self.type and self.type.get("versie") == ot["versie"]:
+                self.afdruk["model"] = modelnaam(self.type)
         self.document.schrijf_eigenschap(AFDRUK, json.dumps(self.afdruk))
 
     def _laad_geschiedenis(self):

@@ -1,5 +1,9 @@
 # Wijzigingen
 
+## 0.18.0 (LibreOffice-extensie 0.15.0) — 2026-11-10
+
+Hangt af van oa-paneel 0.11.0. Het eigen paneel van de LibreOffice-extensie schrijft ook de versie en de naam van het metadatamodel in de afdruk, net als oa-kern.
+
 ## 0.17.0 — 2026-11-09
 
 Hangt af van oa-paneel 0.10.0 en oa-contract 0.6.0 (*Laat staan* met reden, meting bij bevestigen). De LibreOffice-extensie blijft 0.14.1.
